@@ -1,6 +1,6 @@
 import unittest
 
-from def_result.ResultDetails.Success.PartialContentDetail import \
+from on_rails.ResultDetails.Success.PartialContentDetail import \
     PartialContentDetail
 from tests.helpers import assert_result_detail
 

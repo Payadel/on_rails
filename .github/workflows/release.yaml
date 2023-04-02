@@ -13,7 +13,7 @@ on:
         default: 'release'
       release_directory:
         required: true
-        default: 'def_result'
+        default: 'on_rails'
       version:
         required: false
         default: ''

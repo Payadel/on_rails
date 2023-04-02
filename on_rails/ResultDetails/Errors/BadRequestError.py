@@ -1,20 +1,20 @@
 from typing import Any, Dict, List, Optional
 
-from def_result.ResultDetails.ErrorDetail import ErrorDetail
+from on_rails.ResultDetails.ErrorDetail import ErrorDetail
 
 
-class UnauthorizedError(ErrorDetail):
-    """ An error that occurs when a user is not authorized to perform a certain action. Default code is 401.
+class BadRequestError(ErrorDetail):
+    """
+    Represents a bad request error. Default code is 400.
 
-    This error is a subclass of `ErrorDetail`, which provides additional details about the error.
+    This error occurs when the request is invalid or improperly formatted.
 
     Inherits from ErrorDetail class.
-
     """
 
-    def __init__(self, title: Optional[str] = "Unauthorized Error",
+    def __init__(self, title: Optional[str] = "BadRequest Error",
                  message: Optional[str] = None,
-                 code: Optional[int] = 401,
+                 code: Optional[int] = 400,
                  errors: Optional[Dict[str, str]] = None,
                  exception: Optional[Exception] = None,
                  more_data: Optional[List[Any]] = None):

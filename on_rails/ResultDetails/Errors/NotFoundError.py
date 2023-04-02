@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional
 
-from def_result.ResultDetails.ErrorDetail import ErrorDetail
+from on_rails.ResultDetails.ErrorDetail import ErrorDetail
 
 
 class NotFoundError(ErrorDetail):

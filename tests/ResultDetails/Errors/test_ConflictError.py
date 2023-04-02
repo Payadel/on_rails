@@ -1,6 +1,6 @@
 import unittest
 
-from def_result.ResultDetails.Errors.ConflictError import ConflictError
+from on_rails.ResultDetails.Errors.ConflictError import ConflictError
 from tests.helpers import assert_error_detail
 
 

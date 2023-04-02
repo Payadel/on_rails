@@ -34,7 +34,7 @@ repos:
     rev: v2.14.5
     hooks:
       - id: pylint
-        files: 'def_result/'
+        files: 'on_rails/'
 
   - repo: local
     hooks:

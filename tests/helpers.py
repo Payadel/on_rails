@@ -2,9 +2,9 @@ import traceback
 import unittest
 from typing import Any, Dict, List, Optional
 
-from def_result.Result import Result
-from def_result.ResultDetail import ResultDetail
-from def_result.ResultDetails.ErrorDetail import ErrorDetail
+from on_rails.Result import Result
+from on_rails.ResultDetail import ResultDetail
+from on_rails.ResultDetails.ErrorDetail import ErrorDetail
 
 
 def assert_result(test_class: unittest.TestCase, result: Result, success: bool,

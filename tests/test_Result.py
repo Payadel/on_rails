@@ -1,8 +1,8 @@
 import unittest
 
-from def_result.Result import Result
-from def_result.ResultDetail import ResultDetail
-from def_result.ResultDetails import SuccessDetail
+from on_rails.Result import Result
+from on_rails.ResultDetail import ResultDetail
+from on_rails.ResultDetails import SuccessDetail
 from tests.helpers import assert_result
 
 

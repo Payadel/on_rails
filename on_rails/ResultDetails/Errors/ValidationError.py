@@ -1,18 +1,16 @@
 from typing import Any, Dict, List, Optional
 
-from def_result.ResultDetails.ErrorDetail import ErrorDetail
+from on_rails.ResultDetails.ErrorDetail import ErrorDetail
 
 
-class BadRequestError(ErrorDetail):
+class ValidationError(ErrorDetail):
     """
-    Represents a bad request error. Default code is 400.
-
-    This error occurs when the request is invalid or improperly formatted.
+    Represents a validation error. Default code is 400.
 
     Inherits from ErrorDetail class.
     """
 
-    def __init__(self, title: Optional[str] = "BadRequest Error",
+    def __init__(self, title: Optional[str] = "One or more validation errors occurred",
                  message: Optional[str] = None,
                  code: Optional[int] = 400,
                  errors: Optional[Dict[str, str]] = None,
