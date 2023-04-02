@@ -1,14 +1,14 @@
 # https://python-poetry.org/docs/pyproject/
 [tool.poetry]
-name = "def_result"
+name = "on_rails"
 version = "1.0.0"
 description = "A functional error handling library for working with the results of a function to improve managing errors."
 authors = ["Payadel <payadelteam@gmail.com>"]
 readme = "README.md"
 license = "GPLV3"
-repository = "https://github.com/Payadel/def_result"
-keywords = ["functional programming", "error handling", "def", "function"]
-packages = [{ include = "def_result" }]
+repository = "https://github.com/Payadel/on_rails"
+keywords = ["railway oriented","functional programming", "error handling"]
+packages = [{ include = "on_rails" }]
 
 [tool.poetry.dependencies]
 python = "^3.10"

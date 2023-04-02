@@ -1,6 +1,6 @@
 import unittest
 
-from def_result.ResultDetails.Errors.ForbiddenError import ForbiddenError
+from on_rails.ResultDetails.Errors.ForbiddenError import ForbiddenError
 from tests.helpers import assert_error_detail
 
 

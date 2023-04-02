@@ -1,18 +1,20 @@
 from typing import Any, Dict, List, Optional
 
-from def_result.ResultDetails.ErrorDetail import ErrorDetail
+from on_rails.ResultDetails.ErrorDetail import ErrorDetail
 
 
-class ValidationError(ErrorDetail):
+class ConflictError(ErrorDetail):
     """
-    Represents a validation error. Default code is 400.
+      Represents a conflict error. Default code is 409.
 
-    Inherits from ErrorDetail class.
-    """
+      This error occurs when an operation cannot be completed due to conflicting data.
 
-    def __init__(self, title: Optional[str] = "One or more validation errors occurred",
+      Inherits from ErrorDetail class.
+      """
+
+    def __init__(self, title: Optional[str] = "Conflict Error",
                  message: Optional[str] = None,
-                 code: Optional[int] = 400,
+                 code: Optional[int] = 409,
                  errors: Optional[Dict[str, str]] = None,
                  exception: Optional[Exception] = None,
                  more_data: Optional[List[Any]] = None):

@@ -1,6 +1,6 @@
 import unittest
 
-from def_result.ResultDetails.Errors.UnauthorizedError import UnauthorizedError
+from on_rails.ResultDetails.Errors.UnauthorizedError import UnauthorizedError
 from tests.helpers import assert_error_detail
 
 

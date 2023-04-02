@@ -1,6 +1,6 @@
 import unittest
 
-from def_result.ResultDetails.Errors.NotFoundError import NotFoundError
+from on_rails.ResultDetails.Errors.NotFoundError import NotFoundError
 from tests.helpers import assert_error_detail
 
 

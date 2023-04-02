@@ -1,6 +1,6 @@
 import unittest
 
-from def_result.ResultDetails.Success.CreatedDetail import CreatedDetail
+from on_rails.ResultDetails.Success.CreatedDetail import CreatedDetail
 from tests.helpers import assert_result_detail
 
 

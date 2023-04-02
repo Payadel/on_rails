@@ -1,6 +1,6 @@
 import unittest
 
-from def_result.ResultDetails.Errors.BadRequestError import BadRequestError
+from on_rails.ResultDetails.Errors.BadRequestError import BadRequestError
 from tests.helpers import assert_error_detail
 
 

@@ -1,7 +1,7 @@
 import traceback
 from typing import Any, Dict, List, Optional
 
-from def_result.ResultDetail import ResultDetail
+from on_rails.ResultDetail import ResultDetail
 
 
 class ErrorDetail(ResultDetail):

@@ -1,20 +1,18 @@
 from typing import Any, Dict, List, Optional
 
-from def_result.ResultDetails.ErrorDetail import ErrorDetail
+from on_rails.ResultDetails.ErrorDetail import ErrorDetail
 
 
-class ConflictError(ErrorDetail):
+class ForbiddenError(ErrorDetail):
     """
-      Represents a conflict error. Default code is 409.
+    Represents a Forbidden error. Default code is 403.
 
-      This error occurs when an operation cannot be completed due to conflicting data.
+    Inherits from ErrorDetail class.
+    """
 
-      Inherits from ErrorDetail class.
-      """
-
-    def __init__(self, title: Optional[str] = "Conflict Error",
+    def __init__(self, title: Optional[str] = "Forbidden Error",
                  message: Optional[str] = None,
-                 code: Optional[int] = 409,
+                 code: Optional[int] = 403,
                  errors: Optional[Dict[str, str]] = None,
                  exception: Optional[Exception] = None,
                  more_data: Optional[List[Any]] = None):

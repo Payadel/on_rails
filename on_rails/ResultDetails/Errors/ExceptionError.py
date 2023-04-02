@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional
 
-from def_result.ResultDetails.Errors.InternalError import InternalError
+from on_rails.ResultDetails.Errors.InternalError import InternalError
 
 
 class ExceptionError(InternalError):

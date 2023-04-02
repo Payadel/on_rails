@@ -1,6 +1,6 @@
 import unittest
 
-from def_result.ResultDetails.Errors.ValidationError import ValidationError
+from on_rails.ResultDetails.Errors.ValidationError import ValidationError
 from tests.helpers import assert_error_detail
 
 

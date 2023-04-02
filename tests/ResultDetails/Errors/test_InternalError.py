@@ -1,6 +1,6 @@
 import unittest
 
-from def_result.ResultDetails.Errors.InternalError import InternalError
+from on_rails.ResultDetails.Errors.InternalError import InternalError
 from tests.helpers import assert_error_detail
 
 

@@ -12,7 +12,7 @@ To set up a development environment, please follow these steps:
 1. Clone the repo
 
    ```sh
-   git clone https://github.com/Payadel/def_result
+   git clone https://github.com/Payadel/on_rails
    ```
 
 2. Run `requirements.py`:
@@ -25,7 +25,7 @@ To set up a development environment, please follow these steps:
 ## Issues and feature requests
 
 You've found a bug in the source code, a mistake in the documentation or maybe you'd like a new feature? You can help us
-by [submitting an issue on GitHub](https://github.com/Payadel/def_result/issues). Before you create an issue, make sure
+by [submitting an issue on GitHub](https://github.com/Payadel/on_rails/issues). Before you create an issue, make sure
 to search the issue archive -- your issue may have already been addressed!
 
 Please try to create bug reports that are:
@@ -40,14 +40,14 @@ Please try to create bug reports that are:
 ### How to submit a Pull Request
 
 1. Search our repository for open or closed
-   [Pull Requests](https://github.com/Payadel/def_result/pulls)
+   [Pull Requests](https://github.com/Payadel/on_rails/pulls)
    that relate to your submission. You don't want to duplicate effort.
 2. Fork the project
 3. Create your feature branch (`git checkout -b feat/amazing_feature`)
 4. Commit your changes (`git commit -m 'feat: add amazing_feature'`)
 
 > This project uses [conventional commits](https://www.conventionalcommits.org), so please follow the specification in your commit messages.
-You can see valid types from [this file](../.versionrc.json).
+You can see valid types from [this file](https://github.com/Payadel/on_rails/blob/main/.configs/commitlint.config.js).
 
 5. Push to the branch (`git push origin feat/amazing_feature`)
 6. Open a Pull Request

@@ -1,7 +1,6 @@
 import unittest
 
-from def_result.ResultDetails.Success.NotModifiedDetail import \
-    NotModifiedDetail
+from on_rails.ResultDetails.Success.NotModifiedDetail import NotModifiedDetail
 from tests.helpers import assert_result_detail
 
 

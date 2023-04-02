@@ -1,6 +1,6 @@
 from typing import Any, List, Optional
 
-from def_result.ResultDetails.SuccessDetail import SuccessDetail
+from on_rails.ResultDetails.SuccessDetail import SuccessDetail
 
 
 class PartialContentDetail(SuccessDetail):

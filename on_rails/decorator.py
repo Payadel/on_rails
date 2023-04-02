@@ -1,5 +1,5 @@
-from def_result.Result import Result
-from def_result.ResultDetails.Errors.ExceptionError import ExceptionError
+from on_rails.Result import Result
+from on_rails.ResultDetails.Errors.ExceptionError import ExceptionError
 
 
 def def_result(func):
