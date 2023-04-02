@@ -31,7 +31,7 @@ jobs:
     - name: Run tests and generate coverage report
       run: |
         coverage run --source=on_rails --branch -m pytest tests
-        rm coverage.md
+        [ -f coverage.md ] && rm coverage.md
         coverage report -m --skip-empty --format=markdown >> coverage.md
 
     - name: Read Report
