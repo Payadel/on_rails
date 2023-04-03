@@ -2,7 +2,7 @@
 [tool.poetry]
 name = "on_rails"
 version = "1.0.0"
-description = "A functional error handling library for working with the results of a function to improve managing errors."
+description = "Simple and powerful Railway Oriented library for python"
 authors = ["Payadel <payadelteam@gmail.com>"]
 readme = "README.md"
 license = "GPLV3"
