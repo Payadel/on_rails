@@ -139,6 +139,19 @@ class TestResult(unittest.TestCase):
         func_result = result._call_function(function_raise_exception)
         assert_exception(self, func_result, Exception)
 
+    def test_call_function_give_function_returns_value(self):
+        result = Result.fail()
+
+        func_result = result._call_function(lambda : 5)
+        assert_result(self, func_result, success=True, value=5)
+
+    def test_call_function_give_function_returns_none(self):
+        func_result = Result.fail()._call_function(lambda: print())
+        assert_result(self, func_result, success=False)
+
+        func_result = Result.ok(5)._call_function(lambda: print())
+        assert_result(self, func_result, success=True, value=5)
+
     def test_on_success_with_fail_result(self):
         fail_result = Result.fail()
 
