@@ -1,7 +1,7 @@
-import traceback
 import unittest
 from typing import Any, Dict, List, Optional
 
+from on_rails import ExceptionError
 from on_rails.Result import Result
 from on_rails.ResultDetail import ResultDetail
 from on_rails.ResultDetails.ErrorDetail import ErrorDetail
@@ -34,3 +34,11 @@ def assert_error_detail(test_class: unittest.TestCase, error_detail: ErrorDetail
     test_class.assertEqual(exception, error_detail.exception)
 
     test_class.assertTrue(error_detail.stack_trace)
+
+
+def assert_exception(test_class: unittest.TestCase, result: Result, exception_type=None):
+    test_class.assertFalse(result.success)
+    detail: ExceptionError = result.detail
+    test_class.assertTrue(isinstance(detail, ExceptionError))
+    if exception_type:
+        test_class.assertTrue(isinstance(detail.exception, exception_type))

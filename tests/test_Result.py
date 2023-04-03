@@ -3,7 +3,11 @@ import unittest
 from on_rails.Result import Result
 from on_rails.ResultDetail import ResultDetail
 from on_rails.ResultDetails import SuccessDetail
-from tests.helpers import assert_result
+from tests.helpers import assert_exception, assert_result
+
+
+def function_raise_exception():
+    raise Exception("fake")
 
 
 class TestResult(unittest.TestCase):
@@ -95,6 +99,70 @@ class TestResult(unittest.TestCase):
     def test_str_with_detail_(self):
         result = Result.ok(detail=SuccessDetail(message="test"))
         self.assertTrue(str(result).startswith("success: True\nDetail:\n"))
+
+    def test_call_function_give_function_without_parameters(self):
+        result = Result.ok(1)
+
+        func_result = result._call_function(lambda: Result.ok(2))
+        assert_result(self, func_result, success=True, value=2)
+
+        func_result = result._call_function(lambda: Result.fail())
+        assert_result(self, func_result, success=False)
+
+    def test_call_function_give_function_with_parameters(self):
+        result = Result.ok(1)
+
+        func_result = result._call_function(lambda x: Result.ok(x + 1), 5)
+        assert_result(self, func_result, success=True, value=6)
+
+        func_result = result._call_function(lambda a, b: Result.ok(a + b), 2, b=3)
+        assert_result(self, func_result, success=True, value=5)
+
+    def test_call_function_give_function_use_prev_arg(self):
+        result = Result.ok(1)
+
+        func_result = result._call_function(lambda prev, a, b: Result.ok(prev + a + b), 2, b=3)
+        assert_result(self, func_result, success=True, value=6)
+
+    def test_call_function_with_invalid_args(self):
+        result = Result.ok(1)
+
+        func_result = result._call_function(lambda x: x + 1, 1, 2, 3, 4)
+        assert_exception(self, func_result, TypeError)
+
+    def test_call_function_with_exception(self):
+        result = Result.ok(1)
+
+        func_result = result._call_function(function_raise_exception)
+        assert_exception(self, func_result, Exception)
+
+    def test_on_success_with_fail_result(self):
+        fail_result = Result.fail()
+
+        func_result = fail_result.on_success(lambda: Result.ok())
+
+        self.assertEqual(fail_result, func_result)
+
+    def test_on_success_with_success_result(self):
+        success_result = Result.ok(1)
+
+        func_result = success_result.on_success(lambda: Result.ok(5))
+
+        assert_result(self, func_result, success=True, value=5)
+
+    def test_on_fail_with_success_result(self):
+        success_result = Result.ok(5)
+
+        func_result = success_result.on_fail(function_raise_exception)
+
+        assert_result(self, func_result, success=True, value=5)
+
+    def test_on_fail_with_fail_result(self):
+        fail_result = Result.fail()
+
+        func_result = fail_result.on_fail(lambda: Result.ok(5))
+
+        assert_result(self, func_result, success=True, value=5)
 
 
 if __name__ == "__main__":
