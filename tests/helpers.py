@@ -14,6 +14,13 @@ def assert_result(test_class: unittest.TestCase, result: Result, success: bool,
     test_class.assertEqual(value, result.value)
 
 
+def assert_result_with_type(test_class: unittest.TestCase, result: Result, success: bool,
+                            detail_type=None, value: Optional[Any] = None) -> None:
+    test_class.assertEqual(success, result.success)
+    test_class.assertTrue(isinstance(result.detail, detail_type))
+    test_class.assertEqual(value, result.value)
+
+
 def assert_result_detail(test_class: unittest.TestCase, result_detail: ResultDetail, title: str,
                          message: Optional[str] = None, code: Optional[int] = None,
                          more_data: Optional[List[Any]] = []) -> None:

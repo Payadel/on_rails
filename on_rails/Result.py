@@ -2,6 +2,7 @@ import inspect
 from typing import Any, Optional
 
 from on_rails.ResultDetail import ResultDetail
+from on_rails.ResultDetails import ErrorDetail
 from on_rails.ResultDetails.Errors.ExceptionError import ExceptionError
 
 
@@ -90,6 +91,26 @@ class Result:
         if self.success:
             return self
         return self._call_function(func, *args, **kwargs)
+
+    def fail_when(self, condition: bool, error_detail: Optional[ErrorDetail] = None, add_prev_detail: bool = False):
+        """
+        If the condition is true, return a failure result with the given error detail
+
+        :param condition: The condition to check. If it's True, the Result will be a failure
+        :type condition: bool
+        :param error_detail: This is the error detail that will be returned if the condition is true
+        :type error_detail: Optional[ErrorDetail]
+        :param add_prev_detail: If True, the previous error detail will be added to the new error detail, defaults to False
+        :type add_prev_detail: bool (optional)
+        :return: Result object
+        """
+        if not condition:
+            return self
+
+        error_detail = error_detail if error_detail else ErrorDetail()
+        if add_prev_detail:
+            error_detail.add_more_data({"prev_detail": self.detail})
+        return Result.fail(error_detail)
 
     def _call_function(self, func, *args, **kwargs):
         """

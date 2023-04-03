@@ -1,9 +1,12 @@
 import unittest
 
+from on_rails import ErrorDetail
 from on_rails.Result import Result
 from on_rails.ResultDetail import ResultDetail
 from on_rails.ResultDetails import SuccessDetail
-from tests.helpers import assert_exception, assert_result
+from on_rails.ResultDetails.Errors import BadRequestError
+from tests.helpers import (assert_error_detail, assert_exception,
+                           assert_result, assert_result_with_type)
 
 
 def function_raise_exception():
@@ -163,6 +166,29 @@ class TestResult(unittest.TestCase):
         func_result = fail_result.on_fail(lambda: Result.ok(5))
 
         assert_result(self, func_result, success=True, value=5)
+
+    def test_fail_when_condition_is_false(self):
+        result = Result.ok(1).fail_when(False)
+
+        assert_result(self, result, success=True, value=1)
+
+    def test_fail_when_default_error_detail(self):
+        result = Result.ok(1).fail_when(True)
+
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+
+    def test_fail_when_default_custom_detail(self):
+        result = Result.ok(1).fail_when(True, BadRequestError())
+
+        assert_result_with_type(self, result, success=False, detail_type=BadRequestError)
+
+    def test_fail_when_add_prev_detail(self):
+        # Default
+        result = Result.ok(1).fail_when(True)
+        assert_error_detail(self, error_detail=result.detail, title="An error occurred", code=500)
+
+        result = Result.ok(1).fail_when(True, add_prev_detail=True)
+        assert_error_detail(self, error_detail=result.detail, title="An error occurred", code=500, more_data=[{'prev_detail': None}])
 
 
 if __name__ == "__main__":
