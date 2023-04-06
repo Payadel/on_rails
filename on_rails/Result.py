@@ -1,9 +1,9 @@
-import inspect
 from typing import Any, Optional
 
 from on_rails.ResultDetail import ResultDetail
-from on_rails.ResultDetails import ErrorDetail
-from on_rails.ResultDetails.Errors.ExceptionError import ExceptionError
+from on_rails.ResultDetails.ErrorDetail import ErrorDetail
+from on_rails.utility import (await_func, generate_error,
+                              get_num_of_function_parameters)
 
 
 class Result:
@@ -70,18 +70,21 @@ class Result:
             result += f"Detail:\n{self.detail}\n"
         return result
 
-    def on_success(self, func, *args, **kwargs):
+    def on_success(self, func, num_of_try=1):
         """
-        If the result is a success, call the function with the given arguments
+        This function executes a given function only if the previous attempts were successful.
 
-        :param func: The function to call
-        :return: The result object is being returned.
+        :param func: func is a function that will be executed if the previous operation was successful.
+        :param num_of_try: num_of_try is an optional parameter that specifies the number of times the function should be
+        tried in case of failure. If the function fails on the first try, it will be retried num_of_try times. If num_of_try
+        is not specified, the function will only be tried once, defaults to 1 (optional)
+        :return: The method `on_success` returns either self or the result of given function.
         """
         if not self.success:
             return self
-        return self._call_function(func, *args, **kwargs)
+        return self.try_func(func, num_of_try)
 
-    def on_fail(self, func, *args, **kwargs):
+    def on_fail(self, func, num_of_try=1):
         """
         If the result is not successful, call the function with the given arguments
 
@@ -90,7 +93,7 @@ class Result:
         """
         if self.success:
             return self
-        return self._call_function(func, *args, **kwargs)
+        return self.try_func(func, num_of_try, skip_previous_error=True)
 
     def fail_when(self, condition: bool, error_detail: Optional[ErrorDetail] = None, add_prev_detail: bool = False):
         """
@@ -112,38 +115,85 @@ class Result:
             error_detail.add_more_data({"prev_detail": self.detail})
         return Result.fail(error_detail)
 
-    def _call_function(self, func, *args, **kwargs):
+    @staticmethod
+    def convert_to_result(output: Any, none_means_success: bool = True):
         """
-        If the function has no parameters, call it with no parameters. If the function has the same number of parameters as the number of arguments passed to the
-        function, call it with the arguments. If the function has one more parameter than the number of arguments passed to
-        the function, call it with the value of the Result as the first parameter and the arguments as the rest of the
-        parameters
+        The function converts a given output to a Result object, where None can indicate success or failure depending on the
+        value of a boolean parameter.
 
-        :param func: The function to be called
-        :return: A Result object
+        :param output: The output parameter is of type Any, which means it can be any Python object
+        :type output: Any
+        :param none_means_success: A boolean parameter that determines whether a `None` output should be considered a
+        success or a failure. If `none_means_success` is `True`, then a `None` output will be considered a success and the
+        function will return a `Result.ok()` instance. If `none_means_success` is, defaults to True
+        :type none_means_success: bool (optional)
+        :return: The function `convert_to_result` returns a `Result` object. If the `output` parameter is `None`, it returns
+        a `Result` object with a success status if `none_means_success` is `True`, otherwise it returns a `Result` object
+        with a failure status. If the `output` parameter is already a `Result` object, it returns it as is. Otherwise,
         """
+        if output is None:
+            return Result.ok() if none_means_success else Result.fail()
+        if isinstance(output, Result):
+            return output
+        return Result.ok(output)
+
+    def try_func(self, func, num_of_try=1, skip_previous_error: bool = False):
+        """
+        The function `try_func` attempts to execute a given function with a specified number of tries and handles errors.
+
+        :param func: `func` is a function object that will be executed by the `try_func` method. It is the main parameter of
+        the method and must be provided for the method to work
+        :param num_of_try: The number of times the function should be attempted before returning a failure result. The
+        default value is 1, meaning the function will be attempted once, defaults to 1 (optional)
+        :param skip_previous_error: By default, if the previous function fails, the Result is
+         passed as a parameter to the new function. That is, the new function must accept
+         1 parameter. If skip_previous_error is True, the new function can be with or without parameters.
+        :type skip_previous_error: bool (optional)
+        :return: an instance of the `Result` class, which contains either a successful result or an error message.
+        """
+        if func is None:
+            return Result.fail(ErrorDetail(message="The input function can not be None."))
+
+        num_of_function_params = get_num_of_function_parameters(func)
+
+        if num_of_function_params == 0:
+            if self.success or skip_previous_error:
+                return try_func(func, num_of_try=num_of_try)
+            return Result.fail(ErrorDetail(
+                message="The previous function failed. "
+                        "The new function does not have a parameter to get the previous result. "
+                        "Either define a function that accepts a parameter or set skip_previous_error to True."))
+        if num_of_function_params == 1:
+            return try_func(lambda: func(self), num_of_try=num_of_try)
+        return Result.fail(ErrorDetail(
+            message=f"{func.__name__}() takes {num_of_function_params} arguments. It cannot be executed."))
+
+
+def try_func(func, num_of_try=1) -> Result:
+    """
+    The function `try_func` attempts to execute a given function with a specified number of tries and handles errors.
+
+    :param func: The input function that needs to be executed
+    :param num_of_try: The number of times the input function will be attempted to execute in case of failure. The default
+    value is 1, meaning the function will be executed only once by default, defaults to 1 (optional)
+    :return: a `Result` object. The `Result` object can either be a successful result or a failed result with an
+    `ErrorDetail` object containing information about the error.
+    """
+    if func is None:
+        return Result.fail(ErrorDetail(message="The input function can not be None."))
+
+    num_of_function_params = get_num_of_function_parameters(func)
+    if num_of_function_params > 0:
+        return Result.fail(ErrorDetail(
+            message=f"{func.__name__}() takes {num_of_function_params} arguments. It cannot be executed."))
+
+    errors = []
+    for _ in range(num_of_try):
         try:
-            # Inputs
-            num_of_inputs = len(args) + len(kwargs)
-            function_sign = inspect.signature(func)
-            num_of_function_params = len(function_sign.parameters)
-
-            # Call function and get result
-            if num_of_function_params == 0:
-                result = func()
-            elif num_of_function_params == num_of_inputs:
-                result = func(*args, **kwargs)
-            elif num_of_function_params == num_of_inputs + 1:
-                result = func(self.value, *args, **kwargs)
-            else:
-                raise TypeError(
-                    f"{func.__name__}() takes {num_of_function_params} positional arguments but {len(args)} were given")
-
-            # Process result
-            if isinstance(result, Result):
-                return result
-            if result is not None:
-                return Result.ok(result)
-            return self
+            result = await_func(func)
+            return Result.convert_to_result(result)
         except Exception as e:
-            return Result.fail(ExceptionError(message=str(e), exception=e))
+            errors.append(e)
+
+    error_detail = generate_error(errors, num_of_try)
+    return Result.fail(error_detail)
