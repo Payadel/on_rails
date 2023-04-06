@@ -70,7 +70,7 @@ class Result:
             result += f"Detail:\n{self.detail}\n"
         return result
 
-    def on_success(self, func, num_of_try=1):
+    def on_success(self, func: callable, num_of_try: int = 1):
         """
         This function executes a given function only if the previous attempts were successful.
 
@@ -84,7 +84,7 @@ class Result:
             return self
         return self.try_func(func, num_of_try)
 
-    def on_fail(self, func, num_of_try=1):
+    def on_fail(self, func: callable, num_of_try: int = 1):
         """
         If the result is not successful, call the function with the given arguments
 
@@ -137,7 +137,7 @@ class Result:
             return output
         return Result.ok(output)
 
-    def try_func(self, func, num_of_try=1, skip_previous_error: bool = False):
+    def try_func(self, func: callable, num_of_try: int = 1, skip_previous_error: bool = False):
         """
         The function `try_func` attempts to execute a given function with a specified number of tries and handles errors.
 
@@ -169,7 +169,7 @@ class Result:
             message=f"{func.__name__}() takes {num_of_function_params} arguments. It cannot be executed."))
 
 
-def try_func(func, num_of_try=1) -> Result:
+def try_func(func: callable, num_of_try: int = 1) -> Result:
     """
     The function `try_func` attempts to execute a given function with a specified number of tries and handles errors.
 

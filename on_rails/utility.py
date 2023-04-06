@@ -5,7 +5,7 @@ from typing import Any, Coroutine, List
 from on_rails.ResultDetails.ErrorDetail import ErrorDetail
 
 
-def get_num_of_function_parameters(func) -> int:
+def get_num_of_function_parameters(func: callable) -> int:
     """
     Returns the number of parameters of a given function.
 
@@ -16,7 +16,7 @@ def get_num_of_function_parameters(func) -> int:
     return len(inspect.signature(func).parameters)
 
 
-def is_async(func):
+def is_async(func: callable):
     """
     The function checks if a given function is a coroutine function
 
@@ -27,7 +27,7 @@ def is_async(func):
     return asyncio.iscoroutinefunction(func) if func else False
 
 
-def await_func(func):
+def await_func(func: callable):
     """
     Checks if the result of a function is a coroutine and runs it using asyncio if it is.
 

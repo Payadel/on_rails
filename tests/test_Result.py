@@ -293,8 +293,9 @@ class TestResult(unittest.TestCase):
 
         assert_error_detail(self, error_detail=result.detail, title="An error occurred",
                             message="The previous function failed. "
-                        "The new function does not have a parameter to get the previous result. "
-                        "Either define a function that accepts a parameter or set skip_previous_error to True.", code=500)
+                                    "The new function does not have a parameter to get the previous result. "
+                                    "Either define a function that accepts a parameter or set skip_previous_error to True.",
+                            code=500)
 
     def test_try_func_without_parameters_on_failed_result_with_skip_previous_error(self):
         result = Result.fail().try_func(lambda: 5, skip_previous_error=True)
@@ -326,7 +327,7 @@ class TestResult(unittest.TestCase):
                             code=500, exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION])
 
     def test_try_func_give_invalid_func(self):
-        result = Result.ok().try_func(lambda x,y: x)
+        result = Result.ok().try_func(lambda x, y: x)
 
         self.assertFalse(result.success)
         assert_error_detail(self, error_detail=result.detail, title="An error occurred",

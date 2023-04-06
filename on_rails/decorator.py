@@ -17,7 +17,7 @@ def def_result(is_async: bool = False):
     :return: The function `def_result` returns the inner decorator function `inner_decorator`.
     """
 
-    def inner_decorator(func):
+    def inner_decorator(func: callable):
         def wrapper(*args, **kwargs):
             try:
                 result = await_func(lambda: func(*args, **kwargs))
