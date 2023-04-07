@@ -1,53 +1,54 @@
 # Changelog
 
-All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+All notable changes to this project will be documented in this file.
+See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
 ## [2.0.0](https://github.com/Payadel/on_rails/compare/v1.0.0...v2.0.0) (2023-04-07)
 
-
 ### ⚠ BREAKING CHANGES
 
-* rename `def_result` to `on_rails`
 * rename `def_result` to `on_rails`
 
 ### Features
 
 * add `fail_when` ([9d2ca24](https://github.com/Payadel/on_rails/commit/9d2ca24f6bd55abc1d260d13b38de9d5aaeb9c2e))
-* add `on_success` and `on_fail` functions ([d271141](https://github.com/Payadel/on_rails/commit/d271141d7016340a13e5cee5ff5d4ddd0e5396e0))
-* add `try_only_on_exceptions` to `on_success` and `on_fail` functions ([5375b24](https://github.com/Payadel/on_rails/commit/5375b242c7d70ad988aa975020c249c7e83530db))
-* add `try_only_on_exceptions` to `try_func` functions ([e445fce](https://github.com/Payadel/on_rails/commit/e445fce9fd90cad20f2378d4f85041b35f0c753a))
-* **decorator:** supports `async` ([1a9f63d](https://github.com/Payadel/on_rails/commit/1a9f63dea611fbad8847cf7f4545be17d097235c))
-* **result:** add `try_func`, add `convert_to_result` ([fd881cc](https://github.com/Payadel/on_rails/commit/fd881ccb9609732de41f59e1978aa0d43e1689d0))
-* specify annotation for `func` parameters ([ec098f8](https://github.com/Payadel/on_rails/commit/ec098f8a3bda2178866fe6eb4900809c52a5bace))
-
+* add `on_success` and `on_fail`
+  functions ([d271141](https://github.com/Payadel/on_rails/commit/d271141d7016340a13e5cee5ff5d4ddd0e5396e0))
+* add `try_only_on_exceptions` to `on_success` and `on_fail`
+  functions ([5375b24](https://github.com/Payadel/on_rails/commit/5375b242c7d70ad988aa975020c249c7e83530db))
+* add `try_only_on_exceptions` to `try_func`
+  functions ([e445fce](https://github.com/Payadel/on_rails/commit/e445fce9fd90cad20f2378d4f85041b35f0c753a))
+* **decorator:**
+  supports `async` ([1a9f63d](https://github.com/Payadel/on_rails/commit/1a9f63dea611fbad8847cf7f4545be17d097235c))
+* **result:** add `try_func`,
+  add `convert_to_result` ([fd881cc](https://github.com/Payadel/on_rails/commit/fd881ccb9609732de41f59e1978aa0d43e1689d0))
+* specify annotation for `func`
+  parameters ([ec098f8](https://github.com/Payadel/on_rails/commit/ec098f8a3bda2178866fe6eb4900809c52a5bace))
 
 ### Fixes
 
-* rename `def_result` to `on_rails` ([0215149](https://github.com/Payadel/on_rails/commit/0215149daad051e4459b4038b1e708e634e94275))
-* rename `def_result` to `on_rails` ([4493029](https://github.com/Payadel/on_rails/commit/449302978795bacd12af2a963bab5084211df67e))
-
+* rename `def_result`
+  to `on_rails` ([0215149](https://github.com/Payadel/on_rails/commit/0215149daad051e4459b4038b1e708e634e94275)
+  , [4493029](https://github.com/Payadel/on_rails/commit/449302978795bacd12af2a963bab5084211df67e))
 
 ### Documents
 
-* add description to pyproject.toml ([bf27a72](https://github.com/Payadel/on_rails/commit/bf27a723a17f4425d4bb5482f69c117a1a8cffc6))
-* **readme:** update README.md ([04f99fe](https://github.com/Payadel/on_rails/commit/04f99fe64b98ac74e31280b29bb8b26f8a47fe25))
-
+* add description to
+  pyproject.toml ([bf27a72](https://github.com/Payadel/on_rails/commit/bf27a723a17f4425d4bb5482f69c117a1a8cffc6))
+* **readme:** update
+  README.md ([04f99fe](https://github.com/Payadel/on_rails/commit/04f99fe64b98ac74e31280b29bb8b26f8a47fe25))
 
 ### Refactors
 
 * minor updates ([28a3837](https://github.com/Payadel/on_rails/commit/28a38374cf942ded3ece3e43422aa42ffefe36c1))
 
-
-### Tests
-
-* add more tests for `call_function` ([e42c71c](https://github.com/Payadel/on_rails/commit/e42c71c37fd923756d8cc67eff63cb3a9d254213))
-
-
 ### Development: CI/CD, Build, etc
 
-* **coverage:** fix coverage action ([0873126](https://github.com/Payadel/on_rails/commit/0873126de8ba676b56ddac33415faabffa7bff68))
-* **coverage:** fix coverage action ([ff03f77](https://github.com/Payadel/on_rails/commit/ff03f7791cc67b651602da085ef44f38a746bddf))
-* **lock:** remove lock.yml action ([bbe562e](https://github.com/Payadel/on_rails/commit/bbe562e77da1b31c32fdf0858574e1a638ec73fb))
+* **coverage:** fix coverage
+  action ([0873126](https://github.com/Payadel/on_rails/commit/0873126de8ba676b56ddac33415faabffa7bff68)
+  , [ff03f77](https://github.com/Payadel/on_rails/commit/ff03f7791cc67b651602da085ef44f38a746bddf))
+* **lock:** remove lock.yml
+  action ([bbe562e](https://github.com/Payadel/on_rails/commit/bbe562e77da1b31c32fdf0858574e1a638ec73fb))
 
 ## [1.0.0](https://github.com/Payadel/on_rails/compare/v0.0.3...v1.0.0) (2023-04-02)
 
@@ -165,10 +166,8 @@ All notable changes to this project will be documented in this file. See [standa
   classes ([bab86c8](https://github.com/Payadel/on_rails/commit/bab86c8ab932e874266680c093cebcb3aa7dfffe))
 * add some success
   details ([35ac92b](https://github.com/Payadel/on_rails/commit/35ac92b91c7329be0f51409f7c03055ca7e56dd3))
-* add
-  SuccessDetail.py ([261e631](https://github.com/Payadel/on_rails/commit/261e6313448dc3aa824e8bbe3d82fbaf9af3b21a))
-* add
-  UnauthorizedError ([a60234b](https://github.com/Payadel/on_rails/commit/a60234b16708c73d8e5041cd2e24dd825711fe00))
+* add SuccessDetail.py ([261e631](https://github.com/Payadel/on_rails/commit/261e6313448dc3aa824e8bbe3d82fbaf9af3b21a))
+* add UnauthorizedError ([a60234b](https://github.com/Payadel/on_rails/commit/a60234b16708c73d8e5041cd2e24dd825711fe00))
 * add ValidationError ([fbf0ed7](https://github.com/Payadel/on_rails/commit/fbf0ed799f0effd6fa614f8df8402665c22d029d))
 * **decorator:** support functions that return
   Result ([274bbd3](https://github.com/Payadel/on_rails/commit/274bbd33f478390a962160ea1dbee8b31f1c6a3c))
@@ -202,8 +201,7 @@ All notable changes to this project will be documented in this file. See [standa
 * add __init__.py to test
   directories ([5516040](https://github.com/Payadel/on_rails/commit/5516040dd9f0e7f45f9adb04bcf56ac824cff356))
 * add test_Result.py ([b82247b](https://github.com/Payadel/on_rails/commit/b82247b7dc1a703f28876a790c792bd6ec21aa39))
-* fix
-  test_decorator.py ([f1c4508](https://github.com/Payadel/on_rails/commit/f1c4508fdf4bb971c3f371a56140203f081904ce))
+* fix test_decorator.py ([f1c4508](https://github.com/Payadel/on_rails/commit/f1c4508fdf4bb971c3f371a56140203f081904ce))
 * refactor ([9808868](https://github.com/Payadel/on_rails/commit/98088680a55a64d2189dada04d44de75809a05cc))
 * update
   test_ExceptionError.py ([1ba3ddd](https://github.com/Payadel/on_rails/commit/1ba3dddb9d8bd39fdc64b1cb8940fa785ae8582a))
