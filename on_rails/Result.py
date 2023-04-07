@@ -1,9 +1,9 @@
 from typing import Any, Optional
 
+from on_rails._utility import (await_func, generate_error,
+                               get_num_of_function_parameters)
 from on_rails.ResultDetail import ResultDetail
 from on_rails.ResultDetails.ErrorDetail import ErrorDetail
-from on_rails.utility import (await_func, generate_error,
-                              get_num_of_function_parameters)
 
 
 class Result:

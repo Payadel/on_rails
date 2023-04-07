@@ -1,8 +1,8 @@
 from typing import Coroutine
 
+from on_rails._utility import await_func
 from on_rails.Result import Result
 from on_rails.ResultDetails.Errors.ExceptionError import ExceptionError
-from on_rails.utility import await_func
 
 
 def def_result(is_async: bool = False):

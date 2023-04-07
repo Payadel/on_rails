@@ -1,9 +1,9 @@
 import asyncio
 import unittest
 
+from on_rails._utility import (await_func, generate_error,
+                               get_num_of_function_parameters, is_async)
 from on_rails.ResultDetails.ErrorDetail import ErrorDetail
-from on_rails.utility import (await_func, generate_error,
-                              get_num_of_function_parameters, is_async)
 from tests.helpers import assert_error_detail
 
 
