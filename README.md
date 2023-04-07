@@ -51,12 +51,16 @@
 
 ## About
 
-`on_rails` is a **Railway Oriented** library for python.
+`on_rails` is a **Railway-Oriented** programming library for Python. It is designed to help developers write code that
+is both easier to read and more resilient to errors. Railway-Oriented programming is a pattern that is similar to
+functional programming, but with a focus on handling errors in a more elegant way.
 
-The Railway Oriented Programming (ROP) pattern separates the pure functional domain logic from the side effects, such as
-I/O, by representing them as a **sequence of functions** that return an Either type, representing either a
-successful `Result` or an error. This allows for better **composition** and **testing** of functions, as well as
-improving the code's **maintainability** and **readability**.
+### Railway Oriented
+
+The Railway Oriented Programming (ROP) pattern separates the pure functional domain logic from the side effects, by
+representing them as a **sequence of functions** that return an Either type, representing either a successful `Result`
+or an error. This allows for better **composition** and **testing** of functions, as well as improving the code's **
+maintainability** and **readability**.
 
 It also facilitates the **handling of errors**, as the error handling logic is separated from the main logic, making it
 easier to reason about and handle errors in a consistent and predictable manner. Overall, ROP can lead to more robust
@@ -111,36 +115,61 @@ Use `pip` to install package:
 
 ## Usage
 
-### Sample 1: use decorator for pure functions
-
-In this example, `on_rails` is used as a decorator to wrap the `divide_numbers` function.
+### Sample 1
 
 ```python
-from on_rails import on_rails
+from on_rails import Result, def_result
 
 
-@on_rails
-def divide_numbers(a: int, b: int):
-    if b == 0:
-        raise ValueError("Cannot divide by zero")
-    return a / b
+@def_result()
+def get_number() -> Result:
+    number = int(input("Enter number: "))
+    return Result.ok(number)
 
 
-result = divide_numbers(10, 0)
-
-if result.success:
-    print(f"Operation was successful: {result.value}")
-else:
-    print(f"Operation failed: {str(result.detail)}")
+get_number()
+.on_success(lambda prev: print(f"Number is valid: {prev.value}"))
+.on_fail(lambda prev: print(prev.detail))
 ```
 
-### Sample 2: use `Result` in function
+Within the `get_number` function, the user is prompted to enter an integer number. If the user enters a valid integer,
+the number is returned as a successful result using `Result.ok()`, otherwise, an error message is returned as a failed
+result.
+
+When the number is **not valid**, that is, it cannot be converted to int, an **exception** is raised. Thanks to
+the `def_result` decorator, all exceptions are handled and the error details are saved in the Result detail.
+
+The `get_number()` function is then called and its result is **chained** with two methods: `on_success()`
+and `on_fail()`. If the `get_number()` function returns a **successful** result, the lambda function passed
+to `on_success()` is executed, which prints the valid number entered by the user. If the `get_number()` function returns
+a **failed** result, the lambda function passed to `on_fail()` is executed, which prints the error message.
+
+Sample output for **valid** number:
+
+```text
+Enter number: 5
+Number is valid: 5
+```
+
+Sample output for **invalid** number:
+
+```text
+Enter number: a
+Title: An exception occurred
+Message: invalid literal for int() with base 10: 'a'
+Code: 500
+Exception: invalid literal for int() with base 10: 'a'
+Stack trace: ...
+```
+
+### Sample 2:
 
 ```python
-from on_rails import Result
+from on_rails import Result, def_result
 from on_rails.ResultDetails.Errors import ValidationError
 
 
+@def_result()
 def divide_numbers(a: int, b: int):
     if b == 0:
         return Result.fail(ValidationError(message="Cannot divide by zero"))
@@ -152,10 +181,90 @@ result = divide_numbers(10, 0)
 if result.success:
     print(f"Operation was successful: {result.value}")
 else:
-    print(f"Operation failed:")
-    print(str(result.detail))
+    print("Operation failed:")
+    if result.detail.is_instance_of(ValidationError):
+        print("Ooo! This is a validation error!")
+    print(result.detail)
 
 ```
+
+For better error management, you can also specify the error type.
+
+You can use [the implemented](https://github.com/Payadel/on_rails/tree/main/on_rails/ResultDetails) error types or
+implement your own error type.
+
+### Sample 3: Custom Error Detail
+
+```python
+from typing import Optional
+from on_rails import Result, def_result, ErrorDetail
+
+
+class CustomErrorDetail(ErrorDetail):
+    custom_field: str = "custom field!"
+
+    def __init__(self, message: Optional[str] = None):
+        super().__init__(title="This is my custom detail", message=message)
+        self.code = 600  # Custom error code
+
+    def __str__(self):
+        error_details = super().__str__()
+        error_details += f"Custom Field: {self.custom_field}"
+        return error_details
+
+
+@def_result()
+def divide_numbers(a: int, b: int):
+    if b == 0:
+        return Result.fail(CustomErrorDetail(message="Cannot divide by zero"))
+    return Result.ok(a / b)
+
+```
+
+### Sample 4: Retry Operations
+
+```python
+from on_rails.ResultDetails.Success import CreatedDetail
+from on_rails import Result, def_result
+import requests
+
+
+@def_result()
+def create_data(url: str, data: dict[str, str]) -> Result:
+    response = requests.post(url, data=data, timeout=2000)
+    response.raise_for_status()  # Raise an exception if the status code indicates an error
+
+    detail = CreatedDetail() if response.status_code == 201 else None
+    return Result.ok(response.json(), detail)
+
+
+def fake_operation():
+    return Result.ok()
+
+
+fake_operation().on_success(create_data, num_of_try=5)
+
+```
+
+In the example above, if the request goes wrong, an **exception** will be raised. By setting `num_of_try`, you can
+specify how many times the operation should be repeated in case of an error.
+
+### Sample 5: Async Decorator
+
+By default, all operations are executed **synchronous**. If you want to be **asynchronous** set `is_async` to true.
+
+```python
+from on_rails import def_result
+
+
+@def_result(is_async=True)
+async def fetch(session, url):
+    async with session.get(url) as response:
+        return await response.text()
+
+```
+
+> Note: In asymmetric mode, **chain** of functions is not supported.
 
 ## CHANGELOG
 
@@ -210,8 +319,6 @@ all exceptions are handled.
 
 ## Project assistance
 
-**First of, thank you.**
-
 If you want to say thank you or/and support active development of `on_rails`:
 
 - Add a [GitHub Star](https://github.com/Payadel/on_rails) to the project.
@@ -229,9 +336,7 @@ appreciated**.
 Please read [our contribution guidelines](https://github.com/Payadel/on_rails/blob/main/docs/CONTRIBUTING.md), and thank
 you for being involved!
 
-Please do not forget that this project uses [conventional commits](https://www.conventionalcommits.org), so please
-follow the specification in your commit messages. You can see valid types
-from [this file](https://github.com/Payadel/on_rails/blob/main/.configs/commitlint.config.js).
+> Please do not forget that this project uses [conventional commits](https://www.conventionalcommits.org), so please follow the specification in your commit messages. You can see valid types from [this file](https://github.com/Payadel/on_rails/blob/main/.configs/commitlint.config.js).
 
 ## Authors & contributors
 

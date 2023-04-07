@@ -109,7 +109,7 @@ class Result:
         """
         if self.success:
             return self
-        return self.try_func(func, num_of_try, skip_previous_error=True, try_only_on_exceptions=try_only_on_exceptions)
+        return self.try_func(func, num_of_try, ignore_previous_error=True, try_only_on_exceptions=try_only_on_exceptions)
 
     def fail_when(self, condition: bool, error_detail: Optional[ErrorDetail] = None, add_prev_detail: bool = False):
         """
@@ -154,7 +154,7 @@ class Result:
         return Result.ok(output)
 
     def try_func(self, func: callable, num_of_try: int = 1,
-                 skip_previous_error: bool = False, try_only_on_exceptions: bool = True):
+                 ignore_previous_error: bool = False, try_only_on_exceptions: bool = True):
         """
         The function `try_func` attempts to execute a given function with a specified number of tries and handles errors.
 
@@ -162,10 +162,10 @@ class Result:
         the method and must be provided for the method to work
         :param num_of_try: The number of times the function should be attempted before returning a failure result. The
         default value is 1, meaning the function will be attempted once, defaults to 1 (optional)
-        :param skip_previous_error: By default, if the previous function fails, the Result is
+        :param ignore_previous_error: By default, if the previous function fails, the Result is
          passed as a parameter to the new function. That is, the new function must accept
          1 parameter. If skip_previous_error is True, the new function can be with or without parameters.
-        :type skip_previous_error: bool (optional)
+        :type ignore_previous_error: bool (optional)
         the error.
 
     :param try_only_on_exceptions: A boolean parameter that determines whether the function should only be retried if an
@@ -182,7 +182,7 @@ class Result:
         num_of_function_params = get_num_of_function_parameters(func)
 
         if num_of_function_params == 0:
-            if self.success or skip_previous_error:
+            if self.success or ignore_previous_error:
                 return try_func(func, num_of_try=num_of_try, try_only_on_exceptions=try_only_on_exceptions)
             return Result.fail(ErrorDetail(
                 message="The previous function failed. "
