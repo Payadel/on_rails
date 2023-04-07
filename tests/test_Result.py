@@ -343,6 +343,48 @@ class TestResult(unittest.TestCase):
 
     # endregion
 
+    # region on_fail_raise_exception
+
+    def test_on_fail_raise_exception_on_success(self):
+        result = Result.ok()
+
+        new_result = result.on_fail_raise_exception()
+
+        self.assertEqual(result, new_result)
+
+    def test_on_fail_raise_exception(self):
+        result = Result.fail()
+
+        try:
+            result.on_fail_raise_exception()
+            self.assertTrue(False)  # This code should not be executed.
+        except Exception as e:
+            self.assertEqual(Exception, type(e))
+            self.assertEqual('', str(e))
+
+    def test_on_fail_raise_exception_give_exception_type(self):
+        result = Result.fail()
+
+        try:
+            result.on_fail_raise_exception(TypeError)
+            self.assertTrue(False)  # This code should not be executed.
+        except Exception as e:
+            self.assertEqual(TypeError, type(e))
+            self.assertEqual('', str(e))
+
+    def test_on_fail_raise_exception_with_detail(self):
+        result = Result.fail(ErrorDetail(message="fake"))
+
+        try:
+            result.on_fail_raise_exception()
+            self.assertTrue(False)  # This code should not be executed.
+        except Exception as e:
+            self.assertEqual(Exception, type(e))
+            self.assertTrue(str(e) != "" or None)
+
+
+    # endregion
+
     # region on_success_new_detail
 
     def test_on_fail_new_detail_on_success_result(self):

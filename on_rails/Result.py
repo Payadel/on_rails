@@ -255,9 +255,23 @@ class Result:
             return self
         try_func(func, num_of_try, try_only_on_exceptions)  # ignore result
         return self
-    #
-    # def on_fail_raise_exception(self):
-    #     pass  #
+
+    def on_fail_raise_exception(self, exception_type: Optional[type] = None):
+        """
+        Request to raise the exception when the previous function failed.
+
+        :param exception_type: The `exception_type` parameter is an optional argument that specifies the type of exception
+        to be raised if the previous function fails. If this parameter is not provided, a generic `Exception` will be raised.
+        If it is provided, the specified exception type will be raised.
+        :type exception_type: Optional[type]
+        :return: Returns self or raise Exception
+        """
+        if self.success:
+            return self
+        detail = self.detail if self.detail else ""
+        if exception_type:
+            raise exception_type(str(detail))
+        raise Exception(str(detail))
 
     # endregion
 
