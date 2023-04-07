@@ -1,7 +1,7 @@
 | Name                                                    |    Stmts |     Miss |   Branch |   BrPart |    Cover |   Missing |
 |-------------------------------------------------------- | -------: | -------: | -------: | -------: | -------: | --------: |
-| on\_rails/Result.py                                     |       27 |        0 |        6 |        0 |     100% |           |
-| on\_rails/ResultDetail.py                               |       35 |        0 |       14 |        0 |     100% |           |
+| on\_rails/Result.py                                     |      124 |        0 |       62 |        0 |     100% |           |
+| on\_rails/ResultDetail.py                               |       37 |        0 |       16 |        0 |     100% |           |
 | on\_rails/ResultDetails/ErrorDetail.py                  |       24 |        0 |        6 |        0 |     100% |           |
 | on\_rails/ResultDetails/Errors/BadRequestError.py       |        5 |        0 |        0 |        0 |     100% |           |
 | on\_rails/ResultDetails/Errors/ConflictError.py         |        5 |        0 |        0 |        0 |     100% |           |
@@ -19,5 +19,6 @@
 | on\_rails/ResultDetails/SuccessDetail.py                |        5 |        0 |        0 |        0 |     100% |           |
 | on\_rails/ResultDetails/\_\_init\_\_.py                 |        2 |        0 |        0 |        0 |     100% |           |
 | on\_rails/\_\_init\_\_.py                               |        3 |        0 |        0 |        0 |     100% |           |
-| on\_rails/decorator.py                                  |       13 |        0 |        2 |        0 |     100% |           |
-|                                               **TOTAL** |  **177** |    **0** |   **30** |    **0** | **100%** |           |
+| on\_rails/\_utility.py                                  |       24 |        0 |        8 |        0 |     100% |           |
+| on\_rails/decorator.py                                  |       22 |        0 |        4 |        0 |     100% |           |
+|                                               **TOTAL** |  **309** |    **0** |   **98** |    **0** | **100%** |           |
