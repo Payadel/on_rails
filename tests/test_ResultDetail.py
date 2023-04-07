@@ -33,11 +33,20 @@ class TestResultDetail(unittest.TestCase):
         result_detail.add_more_data("more data")
         self.assertEqual(["more data"], result_detail.more_data)
 
-    def test_add_more_data_with_none(self):
+    def test_add_more_data_give_none(self):
         result_detail = ResultDetail(title='title')
 
         result_detail.add_more_data(None)
         self.assertEqual([], result_detail.more_data)
+
+    def test_add_more_data_give_multi_data(self):
+        result_detail = ResultDetail(title='title')
+
+        result_detail.add_more_data("data1")
+        self.assertEqual(["data1"], result_detail.more_data)
+
+        result_detail.add_more_data("data2")
+        self.assertEqual(["data1", "data2"], result_detail.more_data)
 
     def test_str_without_args(self):
         result_detail = ResultDetail(title='title')

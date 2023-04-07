@@ -1,3 +1,5 @@
+# pylint: disable=all
+
 import asyncio
 import unittest
 
@@ -6,8 +8,8 @@ from on_rails.Result import Result, try_func
 from on_rails.ResultDetail import ResultDetail
 from on_rails.ResultDetails import SuccessDetail
 from on_rails.ResultDetails.Errors import BadRequestError
-from tests.helpers import (assert_error_detail, assert_exception,
-                           assert_result, assert_result_with_type)
+from tests.helpers import (assert_error_detail, assert_result,
+                           assert_result_with_type)
 
 FAKE_EXCEPTION = Exception("fake")
 FAKE_ERROR = ErrorDetail("fake")
@@ -23,6 +25,8 @@ async def async_function():
 
 
 class TestResult(unittest.TestCase):
+    # region __init__
+
     def test_init_without_optional_args(self):
         result = Result(True)
 
@@ -34,6 +38,10 @@ class TestResult(unittest.TestCase):
         result = Result(success=True, detail=detail, value=value)
 
         assert_result(self, result=result, success=True, detail=detail, value=value)
+
+    # endregion
+
+    # region ok
 
     def test_ok_without_optional_args(self):
         result = Result.ok()
@@ -47,6 +55,10 @@ class TestResult(unittest.TestCase):
 
         assert_result(self, result=result, success=True, detail=detail, value=value)
 
+    # endregion
+
+    # region fail
+
     def test_fail_without_optional_args(self):
         result = Result.fail()
 
@@ -57,6 +69,10 @@ class TestResult(unittest.TestCase):
         result = Result.fail(detail=detail)
 
         assert_result(self, result=result, success=False, detail=detail)
+
+    # endregion
+
+    # region code
 
     def test_code_without_detail_and_without_args(self):
         # Success
@@ -96,6 +112,10 @@ class TestResult(unittest.TestCase):
         result = Result.fail(detail=detail)
         self.assertEqual(100, result.code(default_success_code=0, default_error_code=1))
 
+    # endregion
+
+    # region __str__
+
     def test_str_success_without_args(self):
         result = Result.ok()
         self.assertEqual("success: True\n", str(result))
@@ -111,6 +131,10 @@ class TestResult(unittest.TestCase):
     def test_str_with_detail_(self):
         result = Result.ok(detail=SuccessDetail(message="test"))
         self.assertTrue(str(result).startswith("success: True\nDetail:\n"))
+
+    # endregion
+
+    # region on_success
 
     def test_on_success_with_fail_result(self):
         fail_result = Result.fail()
@@ -157,6 +181,79 @@ class TestResult(unittest.TestCase):
                             message="Operation failed with 2 attempts. The details of the 2 errors are stored in the more_data field. At least one of the errors was an exception type, the first exception being stored in the exception field.",
                             exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION], code=500)
 
+    # endregion
+
+    # region on_success_add_more_data
+
+    def test_on_success_add_more_data_on_fail_result(self):
+        fail_result = Result.fail()
+
+        func_result = fail_result.on_success_add_more_data("Data")
+
+        assert_result(self, func_result, success=False)
+        self.assertIsNone(func_result.detail)
+
+    def test_on_success_add_more_data_give_none(self):
+        result = Result.ok(1)
+
+        new_result = result.on_success_add_more_data(None)
+
+        assert_result(self, new_result, success=True, value=1)
+        self.assertIsNone(new_result.detail)
+
+    def test_on_success_add_more_data_give_object(self):
+        result = Result.ok(1)
+
+        new_result = result.on_success_add_more_data("Data")
+
+        assert_result_with_type(self, new_result, success=True, value=1, detail_type=SuccessDetail)
+        self.assertEqual(["Data"], new_result.detail.more_data)
+
+    def test_on_success_add_more_data_with_exist_detail(self):
+        result = Result.ok(1, detail=SuccessDetail(more_data=["Data1"]))
+
+        new_result = result.on_success_add_more_data("Data2")
+
+        assert_result_with_type(self, new_result, success=True, value=1, detail_type=SuccessDetail)
+        self.assertEqual(["Data1", "Data2"], new_result.detail.more_data)
+
+    # endregion
+
+    # region on_success_new_detail
+
+    def test_on_success_new_detail_on_fail_result(self):
+        result = Result.fail()
+
+        new_result = result.on_success_new_detail(SuccessDetail)
+
+        assert_result(self, new_result, success=False)
+        self.assertIsNone(new_result.detail)
+
+    def test_on_success_new_detail(self):
+        result = Result.ok(1, SuccessDetail())
+
+        new_result = result.on_success_new_detail(None)
+
+        assert_result(self, new_result, success=True, value=1)
+        self.assertIsNone(new_result.detail)
+
+    # endregion
+
+    # region on_success_tee
+
+    def test_on_success_tee(self):
+        result = Result.ok(1)
+        new_result = result.on_success_tee(None)
+        assert_result(self, new_result, success=True, value=1)
+
+        result = Result.ok(1)
+        new_result = result.on_success_tee(lambda: Result.fail())
+        assert_result(self, new_result, success=True, value=1)
+
+    # endregion
+
+    # region on_fail
+
     def test_on_fail_with_success_result(self):
         success_result = Result.ok(5)
 
@@ -195,6 +292,120 @@ class TestResult(unittest.TestCase):
                             message="Operation failed with 2 attempts. The details of the 2 errors are stored in the more_data field. At least one of the errors was an exception type, the first exception being stored in the exception field.",
                             exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION], code=500)
 
+    # endregion
+
+    # region on_fail_add_more_data
+
+    def test_on_fail_add_more_data_on_success_result(self):
+        success_result = Result.ok()
+
+        func_result = success_result.on_fail_add_more_data("Data")
+
+        assert_result(self, func_result, success=True)
+        self.assertIsNone(func_result.detail)
+
+    def test_on_fail_add_more_data_give_none(self):
+        result = Result.fail()
+
+        new_result = result.on_fail_add_more_data(None)
+
+        assert_result(self, new_result, success=False,)
+        self.assertIsNone(new_result.detail)
+
+    def test_on_fail_add_more_data_give_object(self):
+        result = Result.fail()
+
+        new_result = result.on_fail_add_more_data("Data")
+
+        assert_result_with_type(self, new_result, success=False, detail_type=ErrorDetail)
+        self.assertEqual(["Data"], new_result.detail.more_data)
+
+    def test_on_fail_add_more_data_with_exist_detail(self):
+        result = Result.fail(detail=ErrorDetail(more_data=["Data1"]))
+
+        new_result = result.on_fail_add_more_data("Data2")
+
+        assert_result_with_type(self, new_result, success=False, detail_type=ErrorDetail)
+        self.assertEqual(["Data1", "Data2"], new_result.detail.more_data)
+
+    # endregion
+
+    # region on_fail_tee
+
+    def test_on_fail_tee(self):
+        result = Result.fail()
+        new_result = result.on_fail_tee(None)
+        assert_result(self, new_result, success=False)
+
+        result = Result.fail()
+        new_result = result.on_fail_tee(lambda: Result.ok())
+        assert_result(self, new_result, success=False)
+
+    # endregion
+
+    # region on_fail_raise_exception
+
+    def test_on_fail_raise_exception_on_success(self):
+        result = Result.ok()
+
+        new_result = result.on_fail_raise_exception()
+
+        self.assertEqual(result, new_result)
+
+    def test_on_fail_raise_exception(self):
+        result = Result.fail()
+
+        try:
+            result.on_fail_raise_exception()
+            self.assertTrue(False)  # This code should not be executed.
+        except Exception as e:
+            self.assertEqual(Exception, type(e))
+            self.assertEqual('', str(e))
+
+    def test_on_fail_raise_exception_give_exception_type(self):
+        result = Result.fail()
+
+        try:
+            result.on_fail_raise_exception(TypeError)
+            self.assertTrue(False)  # This code should not be executed.
+        except Exception as e:
+            self.assertEqual(TypeError, type(e))
+            self.assertEqual('', str(e))
+
+    def test_on_fail_raise_exception_with_detail(self):
+        result = Result.fail(ErrorDetail(message="fake"))
+
+        try:
+            result.on_fail_raise_exception()
+            self.assertTrue(False)  # This code should not be executed.
+        except Exception as e:
+            self.assertEqual(Exception, type(e))
+            self.assertTrue(str(e) != "" or None)
+
+
+    # endregion
+
+    # region on_success_new_detail
+
+    def test_on_fail_new_detail_on_success_result(self):
+        result = Result.ok(1, SuccessDetail())
+
+        new_result = result.on_fail_new_detail(ErrorDetail())
+
+        assert_result_with_type(self, new_result, success=True, value=1, detail_type=SuccessDetail)
+
+    def test_on_fail_new_detail(self):
+        result = Result.fail(ErrorDetail())
+
+        new_result = result.on_fail_new_detail(None)
+
+        assert_result(self, new_result, success=False)
+        self.assertIsNone(new_result.detail)
+
+    # endregion
+
+    # region fail_when
+
     def test_fail_when_condition_is_false(self):
         result = Result.ok(1).fail_when(False)
 
@@ -215,9 +426,17 @@ class TestResult(unittest.TestCase):
         result = Result.ok(1).fail_when(True)
         assert_error_detail(self, error_detail=result.detail, title="An error occurred", code=500)
 
+        # Prev is None
         result = Result.ok(1).fail_when(True, add_prev_detail=True)
+        assert_error_detail(self, error_detail=result.detail, title="An error occurred", code=500)
+
+        result = Result.fail(FAKE_ERROR).fail_when(True, add_prev_detail=True)
         assert_error_detail(self, error_detail=result.detail, title="An error occurred", code=500,
-                            more_data=[{'prev_detail': None}])
+                            more_data=[{'prev_detail': FAKE_ERROR}])
+
+    # endregion
+
+    # region convert_to_result
 
     def test_convert_to_result_give_none(self):
         result = Result.convert_to_result(None)
@@ -236,6 +455,10 @@ class TestResult(unittest.TestCase):
     def test_convert_to_result_give_value(self):
         result = Result.convert_to_result(5)
         assert_result(self, result, success=True, value=5)
+
+    # endregion
+
+    # region try_func
 
     def test_try_func_give_none(self):
         result = try_func(None)
@@ -381,6 +604,8 @@ class TestResult(unittest.TestCase):
         self.assertFalse(result.success)
         assert_error_detail(self, error_detail=result.detail, title="An error occurred",
                             message='<lambda>() takes 2 arguments. It cannot be executed.', code=500)
+
+    # endregion
 
 
 if __name__ == "__main__":

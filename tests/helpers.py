@@ -23,7 +23,9 @@ def assert_result_with_type(test_class: unittest.TestCase, result: Result, succe
 
 def assert_result_detail(test_class: unittest.TestCase, result_detail: ResultDetail, title: str,
                          message: Optional[str] = None, code: Optional[int] = None,
-                         more_data: Optional[List[Any]] = []) -> None:
+                         more_data: Optional[List[Any]] = None) -> None:
+    if more_data is None:
+        more_data = []
     test_class.assertEqual(title, result_detail.title)
     test_class.assertEqual(message, result_detail.message)
     test_class.assertEqual(code, result_detail.code)
@@ -33,8 +35,11 @@ def assert_result_detail(test_class: unittest.TestCase, result_detail: ResultDet
 
 
 def assert_error_detail(test_class: unittest.TestCase, error_detail: ErrorDetail, title: str,
-                        message: Optional[str] = None, code: Optional[int] = None, more_data: Optional[List[Any]] = [],
+                        message: Optional[str] = None, code: Optional[int] = None,
+                        more_data: Optional[List[Any]] = None,
                         errors: Optional[Dict[str, str]] = None, exception: Optional[Exception] = None) -> None:
+    if more_data is None:
+        more_data = []
     assert_result_detail(test_class=test_class, result_detail=error_detail,
                          title=title, message=message, code=code, more_data=more_data)
     test_class.assertEqual(errors, error_detail.errors)
