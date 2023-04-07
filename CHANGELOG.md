@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.1.0](https://github.com/Payadel/on_rails/compare/v2.0.1...v2.1.0) (2023-04-07)
+
+
+### Features
+
+* add `on_fail_add_more_data` ([990ba33](https://github.com/Payadel/on_rails/commit/990ba33a59a2dce83b94b1d2d1ad87bd85cf1eb4))
+* add `on_fail_new_detail` ([2f23e5e](https://github.com/Payadel/on_rails/commit/2f23e5e1b879fda46434f827d18fd0b780f69c44))
+* add `on_fail_raise_exception` ([4ace02c](https://github.com/Payadel/on_rails/commit/4ace02c9c2aaf0cf1193b2eea3dccc6db979a5ef))
+* add `on_fail_tee` ([248e486](https://github.com/Payadel/on_rails/commit/248e48678458935ac04e2cf67eb1aab838b43d7d))
+* add `on_success_add_more_data` ([92021e4](https://github.com/Payadel/on_rails/commit/92021e4216318d0511075e2c3b95057475e74144))
+* add `on_success_new_detail` ([6a02d12](https://github.com/Payadel/on_rails/commit/6a02d12a91d3cf9d6dadd9c16d9f20b9d0299c45))
+* add `on_success_tee` ([6878755](https://github.com/Payadel/on_rails/commit/68787555178318eee1733fc154eb39af5ff63ce8))
+
+
+### Refactors
+
+* classify `Result.py` functions. ([2a0e18b](https://github.com/Payadel/on_rails/commit/2a0e18bb6cccf7d5e26977b61c503bf062fb6d6c))
+* classify `test_Result.py` functions ([fca0f1e](https://github.com/Payadel/on_rails/commit/fca0f1e2ac241d2d805cc3097936cc8e98d47497))
+
+
+### Fixes
+
+* fix `ResultDetail.py` bugs ([eddc3ca](https://github.com/Payadel/on_rails/commit/eddc3cab3614ded20b8cb1d29b015c7f2c285f62))
+
 ### [2.0.1](https://github.com/Payadel/on_rails/compare/v2.0.0...v2.0.1) (2023-04-07)
 
 
