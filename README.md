@@ -127,9 +127,9 @@ def get_number() -> Result:
     return Result.ok(number)
 
 
-get_number()
-.on_success(lambda prev: print(f"Number is valid: {prev.value}"))
-.on_fail(lambda prev: print(prev.detail))
+get_number()\
+    .on_success(lambda prev: print(f"Number is valid: {prev.value}"))\
+    .on_fail(lambda prev: print(prev.detail))
 ```
 
 Within the `get_number` function, the user is prompted to enter an integer number. If the user enters a valid integer,

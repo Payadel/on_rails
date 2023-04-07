@@ -1,7 +1,19 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
-See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+### [2.0.1](https://github.com/Payadel/on_rails/compare/v2.0.0...v2.0.1) (2023-04-07)
+
+
+### Documents
+
+* fix codes in README.md ([e1bdff7](https://github.com/Payadel/on_rails/commit/e1bdff7b80b38f9b737f8284e506dbdfd3fcd21b))
+* update README.md ([3abda37](https://github.com/Payadel/on_rails/commit/3abda3707a281f557337ca8a858bbb4d7666ea5f))
+
+
+### Fixes
+
+* make `utility.py` private ([1ad3e1a](https://github.com/Payadel/on_rails/commit/1ad3e1a2a334bf74868cfb0b7bd6d49fd5ad2abc))
 
 ## [2.0.0](https://github.com/Payadel/on_rails/compare/v1.0.0...v2.0.0) (2023-04-07)
 
