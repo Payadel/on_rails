@@ -10,6 +10,7 @@ from tests.helpers import (assert_error_detail, assert_exception,
                            assert_result, assert_result_with_type)
 
 FAKE_EXCEPTION = Exception("fake")
+FAKE_ERROR = ErrorDetail("fake")
 
 
 def function_raise_exception():
@@ -262,11 +263,29 @@ class TestResult(unittest.TestCase):
         assert_result(self, result, success=True, value=5)
 
     def test_try_func_give_func_error(self):
-        result = try_func(function_raise_exception)
+        result = try_func(function_raise_exception, num_of_try=2)
         self.assertFalse(result.success)
         assert_error_detail(self, error_detail=result.detail, title="An error occurred",
-                            message='Operation failed with 1 attempts. The details of the 1 errors are stored in the more_data field. At least one of the errors was an exception type, the first exception being stored in the exception field.',
-                            code=500, exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION])
+                            message='Operation failed with 2 attempts. The details of the 2 errors are stored in the '
+                                    'more_data field. At least one of the errors was an exception type, the first '
+                                    'exception being stored in the exception field.',
+                            code=500, exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION])
+
+    def test_try_func_try_only_on_exceptions(self):
+        result = try_func(lambda: Result.fail(), num_of_try=2, try_only_on_exceptions=True)
+        assert_result(self, result, success=False)
+
+        result = try_func(lambda: Result.fail(), num_of_try=2, try_only_on_exceptions=False)
+        self.assertFalse(result.success)
+        assert_error_detail(self, error_detail=result.detail, title="An error occurred",
+                            message='Operation failed with 2 attempts. There is no more information.', code=500)
+
+        result = try_func(lambda: Result.fail(FAKE_ERROR), num_of_try=2, try_only_on_exceptions=False)
+        self.assertFalse(result.success)
+        assert_error_detail(self, error_detail=result.detail, title="An error occurred",
+                            message='Operation failed with 2 attempts. '
+                                    'The details of the 2 errors are stored in the more_data field. ',
+                            code=500, more_data=[FAKE_ERROR, FAKE_ERROR])
 
     def test_try_func_on_result_give_none(self):
         result = Result.ok().try_func(None)
@@ -288,6 +307,21 @@ class TestResult(unittest.TestCase):
                             message='Operation failed with 2 attempts. The details of the 2 errors are stored in the more_data field. At least one of the errors was an exception type, the first exception being stored in the exception field.',
                             code=500, exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION])
 
+    def test_try_func_without_parameters_try_only_on_exceptions(self):
+        result = Result.ok().try_func(lambda: Result.fail(), num_of_try=2, try_only_on_exceptions=True)
+        assert_result(self, result, success=False)
+
+        result = Result.ok().try_func(lambda: Result.fail(), num_of_try=2, try_only_on_exceptions=False)
+        assert_error_detail(self, error_detail=result.detail, title="An error occurred",
+                            message='Operation failed with 2 attempts. There is no more information.',
+                            code=500)
+
+        result = Result.ok().try_func(lambda: Result.fail(FAKE_ERROR), num_of_try=2, try_only_on_exceptions=False)
+        assert_error_detail(self, error_detail=result.detail, title="An error occurred",
+                            message='Operation failed with 2 attempts. '
+                                    'The details of the 2 errors are stored in the more_data field. ',
+                            code=500, more_data=[FAKE_ERROR, FAKE_ERROR])
+
     def test_try_func_without_parameters_on_failed_result(self):
         result = Result.fail().try_func(lambda: 5)
 
@@ -301,6 +335,21 @@ class TestResult(unittest.TestCase):
         result = Result.fail().try_func(lambda: 5, skip_previous_error=True)
 
         assert_result(self, result, success=True, value=5)
+
+    def test_try_func_with_parameters_try_only_on_exceptions(self):
+        result = Result.ok().try_func(lambda x: Result.fail(), num_of_try=2, try_only_on_exceptions=True)
+        assert_result(self, result, success=False)
+
+        result = Result.ok().try_func(lambda x: Result.fail(), num_of_try=2, try_only_on_exceptions=False)
+        assert_error_detail(self, error_detail=result.detail, title="An error occurred",
+                            message='Operation failed with 2 attempts. There is no more information.',
+                            code=500)
+
+        result = Result.ok().try_func(lambda x: Result.fail(FAKE_ERROR), num_of_try=2, try_only_on_exceptions=False)
+        assert_error_detail(self, error_detail=result.detail, title="An error occurred",
+                            message='Operation failed with 2 attempts. '
+                                    'The details of the 2 errors are stored in the more_data field. ',
+                            code=500, more_data=[FAKE_ERROR, FAKE_ERROR])
 
     def test_try_func_use_prev_result_ok(self):
         result = Result.fail()

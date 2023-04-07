@@ -61,9 +61,11 @@ def generate_error(errors: List[Any], num_of_try: int) -> ErrorDetail:
     message = f"Operation failed with {num_of_try} attempts. "
     if len(errors) > 0:
         message += f"The details of the {len(errors)} errors are stored in the more_data field. "
+        exception = next((error for error in errors if isinstance(error, Exception)), None)
+        if exception is not None:
+            message += "At least one of the errors was an exception type, " \
+                       "the first exception being stored in the exception field."
+        return ErrorDetail(message=message, exception=exception, more_data=errors)
 
-    exception = next((error for error in errors if isinstance(error, Exception)), None)
-    if exception is not None:
-        message += "At least one of the errors was an exception type, " \
-                   "the first exception being stored in the exception field."
-    return ErrorDetail(message=message, exception=exception, more_data=errors)
+    message += "There is no more information."
+    return ErrorDetail(message=message)

@@ -36,11 +36,11 @@ class TestUtility(unittest.TestCase):
     def test_generate_error_none_or_empty_errors(self):
         error_detail = generate_error(None, 2)
         assert_error_detail(self, error_detail=error_detail, title="An error occurred", code=500,
-                            message='Operation failed with 2 attempts. ')
+                            message='Operation failed with 2 attempts. There is no more information.')
 
         error_detail = generate_error([], 2)
         assert_error_detail(self, error_detail=error_detail, title="An error occurred", code=500,
-                            message='Operation failed with 2 attempts. ')
+                            message='Operation failed with 2 attempts. There is no more information.')
 
     def test_generate_error_without_exception_error(self):
         error = ErrorDetail()

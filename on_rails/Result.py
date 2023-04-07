@@ -137,7 +137,8 @@ class Result:
             return output
         return Result.ok(output)
 
-    def try_func(self, func: callable, num_of_try: int = 1, skip_previous_error: bool = False):
+    def try_func(self, func: callable, num_of_try: int = 1,
+                 skip_previous_error: bool = False, try_only_on_exceptions: bool = True):
         """
         The function `try_func` attempts to execute a given function with a specified number of tries and handles errors.
 
@@ -149,6 +150,13 @@ class Result:
          passed as a parameter to the new function. That is, the new function must accept
          1 parameter. If skip_previous_error is True, the new function can be with or without parameters.
         :type skip_previous_error: bool (optional)
+        the error.
+
+    :param try_only_on_exceptions: A boolean parameter that determines whether the function should only be retried if an
+    exception is raised. If set to True, the function will only be retried if an exception is raised. If set to False, the
+    function will be retried regardless of whether an exception is raised or Result is not success, defaults to True
+    :type try_only_on_exceptions: bool (optional)
+    :return: a `Result` object.
         :return: an instance of the `Result` class, which contains either a successful result or an error message.
         """
         if func is None:
@@ -158,18 +166,18 @@ class Result:
 
         if num_of_function_params == 0:
             if self.success or skip_previous_error:
-                return try_func(func, num_of_try=num_of_try)
+                return try_func(func, num_of_try=num_of_try, try_only_on_exceptions=try_only_on_exceptions)
             return Result.fail(ErrorDetail(
                 message="The previous function failed. "
                         "The new function does not have a parameter to get the previous result. "
                         "Either define a function that accepts a parameter or set skip_previous_error to True."))
         if num_of_function_params == 1:
-            return try_func(lambda: func(self), num_of_try=num_of_try)
+            return try_func(lambda: func(self), num_of_try=num_of_try, try_only_on_exceptions=try_only_on_exceptions)
         return Result.fail(ErrorDetail(
             message=f"{func.__name__}() takes {num_of_function_params} arguments. It cannot be executed."))
 
 
-def try_func(func: callable, num_of_try: int = 1) -> Result:
+def try_func(func: callable, num_of_try: int = 1, try_only_on_exceptions: bool = True) -> Result:
     """
     The function `try_func` attempts to execute a given function with a specified number of tries and handles errors.
 
@@ -178,6 +186,12 @@ def try_func(func: callable, num_of_try: int = 1) -> Result:
     value is 1, meaning the function will be executed only once by default, defaults to 1 (optional)
     :return: a `Result` object. The `Result` object can either be a successful result or a failed result with an
     `ErrorDetail` object containing information about the error.
+
+    :param try_only_on_exceptions: A boolean parameter that determines whether the function should only be retried if an
+    exception is raised. If set to True, the function will only be retried if an exception is raised. If set to False, the
+    function will be retried regardless of whether an exception is raised or Result is not success, defaults to True
+    :type try_only_on_exceptions: bool (optional)
+    :return: a `Result` object.
     """
     if func is None:
         return Result.fail(ErrorDetail(message="The input function can not be None."))
@@ -191,7 +205,11 @@ def try_func(func: callable, num_of_try: int = 1) -> Result:
     for _ in range(num_of_try):
         try:
             result = await_func(func)
-            return Result.convert_to_result(result)
+            result = Result.convert_to_result(result)
+            if result.success or try_only_on_exceptions:
+                return result
+            if result.detail:
+                errors.append(result.detail)
         except Exception as e:
             errors.append(e)
 
