@@ -1,3 +1,5 @@
+# pylint: disable=all
+
 import asyncio
 import unittest
 
@@ -245,9 +247,13 @@ class TestResult(unittest.TestCase):
         result = Result.ok(1).fail_when(True)
         assert_error_detail(self, error_detail=result.detail, title="An error occurred", code=500)
 
+        # Prev is None
         result = Result.ok(1).fail_when(True, add_prev_detail=True)
+        assert_error_detail(self, error_detail=result.detail, title="An error occurred", code=500)
+
+        result = Result.fail(FAKE_ERROR).fail_when(True, add_prev_detail=True)
         assert_error_detail(self, error_detail=result.detail, title="An error occurred", code=500,
-                            more_data=[{'prev_detail': None}])
+                            more_data=[{'prev_detail': FAKE_ERROR}])
 
     # endregion
 

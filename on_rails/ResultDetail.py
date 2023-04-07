@@ -40,6 +40,8 @@ class ResultDetail:
         self.code = code
         if more_data is not None:
             self.more_data = more_data
+        else:
+            self.more_data = []
 
     def is_instance_of(self, cls):
         """
@@ -60,7 +62,8 @@ class ResultDetail:
         """
         if data is None:
             return
-        self.more_data = []
+        if self.more_data is None:
+            self.more_data = []
         self.more_data.append(data)
 
     def __str__(self):
