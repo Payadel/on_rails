@@ -261,6 +261,42 @@ class TestResult(unittest.TestCase):
 
     # endregion
 
+    # region on_fail_add_more_data
+
+    def test_on_fail_add_more_data_on_success_result(self):
+        success_result = Result.ok()
+
+        func_result = success_result.on_fail_add_more_data("Data")
+
+        assert_result(self, func_result, success=True)
+        self.assertIsNone(func_result.detail)
+
+    def test_on_fail_add_more_data_give_none(self):
+        result = Result.fail()
+
+        new_result = result.on_fail_add_more_data(None)
+
+        assert_result(self, new_result, success=False,)
+        self.assertIsNone(new_result.detail)
+
+    def test_on_fail_add_more_data_give_object(self):
+        result = Result.fail()
+
+        new_result = result.on_fail_add_more_data("Data")
+
+        assert_result_with_type(self, new_result, success=False, detail_type=ErrorDetail)
+        self.assertEqual(["Data"], new_result.detail.more_data)
+
+    def test_on_fail_add_more_data_with_exist_detail(self):
+        result = Result.fail(detail=ErrorDetail(more_data=["Data1"]))
+
+        new_result = result.on_fail_add_more_data("Data2")
+
+        assert_result_with_type(self, new_result, success=False, detail_type=ErrorDetail)
+        self.assertEqual(["Data1", "Data2"], new_result.detail.more_data)
+
+    # endregion
+
     # region fail_when
 
     def test_fail_when_condition_is_false(self):
