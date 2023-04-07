@@ -70,7 +70,7 @@ class Result:
             result += f"Detail:\n{self.detail}\n"
         return result
 
-    def on_success(self, func: callable, num_of_try: int = 1):
+    def on_success(self, func: callable, num_of_try: int = 1, try_only_on_exceptions=True):
         """
         This function executes a given function only if the previous attempts were successful.
 
@@ -78,22 +78,38 @@ class Result:
         :param num_of_try: num_of_try is an optional parameter that specifies the number of times the function should be
         tried in case of failure. If the function fails on the first try, it will be retried num_of_try times. If num_of_try
         is not specified, the function will only be tried once, defaults to 1 (optional)
+
+        :param try_only_on_exceptions: A boolean parameter that determines whether the function should only be retried if an
+        exception is raised. If set to True, the function will only be retried if an exception is raised. If set to False, the
+        function will be retried regardless of whether an exception is raised or Result is not success, defaults to True
+        :type try_only_on_exceptions: bool (optional)
+
         :return: The method `on_success` returns either self or the result of given function.
         """
         if not self.success:
             return self
-        return self.try_func(func, num_of_try)
+        return self.try_func(func, num_of_try, try_only_on_exceptions)
 
-    def on_fail(self, func: callable, num_of_try: int = 1):
+    def on_fail(self, func: callable, num_of_try: int = 1, try_only_on_exceptions=True):
         """
         If the result is not successful, call the function with the given arguments
 
         :param func: The function to call
+
+        :param num_of_try: num_of_try is an optional parameter that specifies the number of times the function should be
+        tried in case of failure. If the function fails on the first try, it will be retried num_of_try times. If num_of_try
+        is not specified, the function will only be tried once, defaults to 1 (optional)
+
+        :param try_only_on_exceptions: A boolean parameter that determines whether the function should only be retried if an
+        exception is raised. If set to True, the function will only be retried if an exception is raised. If set to False, the
+        function will be retried regardless of whether an exception is raised or Result is not success, defaults to True
+        :type try_only_on_exceptions: bool (optional)
+
         :return: The result object is being returned.
         """
         if self.success:
             return self
-        return self.try_func(func, num_of_try, skip_previous_error=True)
+        return self.try_func(func, num_of_try, skip_previous_error=True, try_only_on_exceptions=try_only_on_exceptions)
 
     def fail_when(self, condition: bool, error_detail: Optional[ErrorDetail] = None, add_prev_detail: bool = False):
         """
@@ -156,6 +172,7 @@ class Result:
     exception is raised. If set to True, the function will only be retried if an exception is raised. If set to False, the
     function will be retried regardless of whether an exception is raised or Result is not success, defaults to True
     :type try_only_on_exceptions: bool (optional)
+
     :return: a `Result` object.
         :return: an instance of the `Result` class, which contains either a successful result or an error message.
         """
