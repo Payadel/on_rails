@@ -3,7 +3,7 @@ name: Coverage Report
 on:
   push:
     tags:
-      - 'v**'
+      - '*'
   workflow_dispatch:
 
 permissions:
