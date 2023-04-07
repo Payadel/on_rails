@@ -239,6 +239,19 @@ class TestResult(unittest.TestCase):
 
     # endregion
 
+    # region on_success_tee
+
+    def test_on_success_tee(self):
+        result = Result.ok(1)
+        new_result = result.on_success_tee(None)
+        assert_result(self, new_result, success=True, value=1)
+
+        result = Result.ok(1)
+        new_result = result.on_success_tee(lambda: Result.fail())
+        assert_result(self, new_result, success=True, value=1)
+
+    # endregion
+
     # region on_fail
 
     def test_on_fail_with_success_result(self):
