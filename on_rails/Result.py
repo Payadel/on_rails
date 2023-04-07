@@ -4,6 +4,7 @@ from on_rails._utility import (await_func, generate_error,
                                get_num_of_function_parameters)
 from on_rails.ResultDetail import ResultDetail
 from on_rails.ResultDetails.ErrorDetail import ErrorDetail
+from on_rails.ResultDetails.SuccessDetail import SuccessDetail
 
 
 class Result:
@@ -22,6 +23,16 @@ class Result:
         self.success = success
         self.detail = detail
         self.value = value
+
+    def __str__(self) -> str:
+        result = f"success: {self.success}\n"
+        if self.value:
+            result += f"Value: {self.value}\n"
+        if self.detail:
+            result += f"Detail:\n{self.detail}\n"
+        return result
+
+    # region Static Methods
 
     @staticmethod
     def ok(value: Optional[Any] = None, detail: Optional[ResultDetail] = None):
@@ -47,90 +58,6 @@ class Result:
         """
         return Result(False, detail)
 
-    def code(self, default_success_code: int = 200, default_error_code: int = 500) -> int:
-        """
-        If the detail has a code, return that, otherwise return the default success code if the status is successful,
-        otherwise return the default error code
-
-        :param default_success_code: The default status code to return if the Result is successful, defaults to 200
-        :type default_success_code: int (optional)
-        :param default_error_code: The default error code to return if the Result is not successful, defaults to 500
-        :type default_error_code: int (optional)
-        :return: int
-        """
-        if self.detail and self.detail.code:
-            return self.detail.code
-        return default_success_code if self.success else default_error_code
-
-    def __str__(self) -> str:
-        result = f"success: {self.success}\n"
-        if self.value:
-            result += f"Value: {self.value}\n"
-        if self.detail:
-            result += f"Detail:\n{self.detail}\n"
-        return result
-
-    def on_success(self, func: callable, num_of_try: int = 1, try_only_on_exceptions=True):
-        """
-        This function executes a given function only if the previous attempts were successful.
-
-        :param func: func is a function that will be executed if the previous operation was successful.
-        :param num_of_try: num_of_try is an optional parameter that specifies the number of times the function should be
-        tried in case of failure. If the function fails on the first try, it will be retried num_of_try times. If num_of_try
-        is not specified, the function will only be tried once, defaults to 1 (optional)
-
-        :param try_only_on_exceptions: A boolean parameter that determines whether the function should only be retried if an
-        exception is raised. If set to True, the function will only be retried if an exception is raised. If set to False, the
-        function will be retried regardless of whether an exception is raised or Result is not success, defaults to True
-        :type try_only_on_exceptions: bool (optional)
-
-        :return: The method `on_success` returns either self or the result of given function.
-        """
-        if not self.success:
-            return self
-        return self.try_func(func, num_of_try, try_only_on_exceptions)
-
-    def on_fail(self, func: callable, num_of_try: int = 1, try_only_on_exceptions=True):
-        """
-        If the result is not successful, call the function with the given arguments
-
-        :param func: The function to call
-
-        :param num_of_try: num_of_try is an optional parameter that specifies the number of times the function should be
-        tried in case of failure. If the function fails on the first try, it will be retried num_of_try times. If num_of_try
-        is not specified, the function will only be tried once, defaults to 1 (optional)
-
-        :param try_only_on_exceptions: A boolean parameter that determines whether the function should only be retried if an
-        exception is raised. If set to True, the function will only be retried if an exception is raised. If set to False, the
-        function will be retried regardless of whether an exception is raised or Result is not success, defaults to True
-        :type try_only_on_exceptions: bool (optional)
-
-        :return: The result object is being returned.
-        """
-        if self.success:
-            return self
-        return self.try_func(func, num_of_try, ignore_previous_error=True, try_only_on_exceptions=try_only_on_exceptions)
-
-    def fail_when(self, condition: bool, error_detail: Optional[ErrorDetail] = None, add_prev_detail: bool = False):
-        """
-        If the condition is true, return a failure result with the given error detail
-
-        :param condition: The condition to check. If it's True, the Result will be a failure
-        :type condition: bool
-        :param error_detail: This is the error detail that will be returned if the condition is true
-        :type error_detail: Optional[ErrorDetail]
-        :param add_prev_detail: If True, the previous error detail will be added to the new error detail, defaults to False
-        :type add_prev_detail: bool (optional)
-        :return: Result object
-        """
-        if not condition:
-            return self
-
-        error_detail = error_detail if error_detail else ErrorDetail()
-        if add_prev_detail:
-            error_detail.add_more_data({"prev_detail": self.detail})
-        return Result.fail(error_detail)
-
     @staticmethod
     def convert_to_result(output: Any, none_means_success: bool = True):
         """
@@ -152,6 +79,114 @@ class Result:
         if isinstance(output, Result):
             return output
         return Result.ok(output)
+
+    # endregion
+
+    def code(self, default_success_code: int = 200, default_error_code: int = 500) -> int:
+        """
+        If the detail has a code, return that, otherwise return the default success code if the status is successful,
+        otherwise return the default error code
+
+        :param default_success_code: The default status code to return if the Result is successful, defaults to 200
+        :type default_success_code: int (optional)
+        :param default_error_code: The default error code to return if the Result is not successful, defaults to 500
+        :type default_error_code: int (optional)
+        :return: int
+        """
+        if self.detail and self.detail.code:
+            return self.detail.code
+        return default_success_code if self.success else default_error_code
+
+    # region on_success
+
+    def on_success(self, func: callable, num_of_try: int = 1, try_only_on_exceptions=True):
+        """
+        This function executes a given function only if the previous attempts were successful.
+
+        :param func: func is a function that will be executed if the previous operation was successful.
+        :param num_of_try: num_of_try is an optional parameter that specifies the number of times the function should be
+        tried in case of failure. If the function fails on the first try, it will be retried num_of_try times. If num_of_try
+        is not specified, the function will only be tried once, defaults to 1 (optional)
+
+        :param try_only_on_exceptions: A boolean parameter that determines whether the function should only be retried if an
+        exception is raised. If set to True, the function will only be retried if an exception is raised. If set to False, the
+        function will be retried regardless of whether an exception is raised or Result is not success, defaults to True
+        :type try_only_on_exceptions: bool (optional)
+
+        :return: The method `on_success` returns either self or the result of given function.
+        """
+        if not self.success:
+            return self
+        return self.try_func(func, num_of_try, try_only_on_exceptions)
+
+    # def on_success_add_more_data(self, more_data: object):
+    #     pass  # TODO: Complete this method
+    #
+    # def on_success_new_detail(self, new_detail: SuccessDetail):
+    #     pass  # TODO: Complete this method
+    #
+    # def on_success_tee(self):
+    #     pass  # TODO: Complete this method
+
+    # endregion
+
+    # region on_fail
+
+    def on_fail(self, func: callable, num_of_try: int = 1, try_only_on_exceptions=True):
+        """
+        If the result is not successful, call the function with the given arguments
+
+        :param func: The function to call
+
+        :param num_of_try: num_of_try is an optional parameter that specifies the number of times the function should be
+        tried in case of failure. If the function fails on the first try, it will be retried num_of_try times. If num_of_try
+        is not specified, the function will only be tried once, defaults to 1 (optional)
+
+        :param try_only_on_exceptions: A boolean parameter that determines whether the function should only be retried if an
+        exception is raised. If set to True, the function will only be retried if an exception is raised. If set to False, the
+        function will be retried regardless of whether an exception is raised or Result is not success, defaults to True
+        :type try_only_on_exceptions: bool (optional)
+
+        :return: The result object is being returned.
+        """
+        if self.success:
+            return self
+        return self.try_func(func, num_of_try, ignore_previous_error=True,
+                             try_only_on_exceptions=try_only_on_exceptions)
+
+    # def on_fail_add_more_data(self, more_data: object):
+    #     pass  # TODO: Complete this method
+    #
+    # def on_fail_new_detail(self, new_detail: ErrorDetail):
+    #     pass  # TODO: Complete this method
+    #
+    # def on_fail_tee(self):
+    #     pass  # TODO: Complete this method
+    #
+    # def on_fail_raise_exception(self):
+    #     pass  # TODO: Complete this method
+
+    # endregion
+
+    def fail_when(self, condition: bool, error_detail: Optional[ErrorDetail] = None, add_prev_detail: bool = False):
+        """
+        If the condition is true, return a failure result with the given error detail
+
+        :param condition: The condition to check. If it's True, the Result will be a failure
+        :type condition: bool
+        :param error_detail: This is the error detail that will be returned if the condition is true
+        :type error_detail: Optional[ErrorDetail]
+        :param add_prev_detail: If True, the previous error detail will be added to the new error detail, defaults to False
+        :type add_prev_detail: bool (optional)
+        :return: Result object
+        """
+        if not condition:
+            return self
+
+        error_detail = error_detail if error_detail else ErrorDetail()
+        if add_prev_detail:
+            error_detail.add_more_data({"prev_detail": self.detail})
+        return Result.fail(error_detail)
 
     def try_func(self, func: callable, num_of_try: int = 1,
                  ignore_previous_error: bool = False, try_only_on_exceptions: bool = True):
