@@ -317,6 +317,25 @@ class TestResult(unittest.TestCase):
 
     # endregion
 
+    # region on_success_new_detail
+
+    def test_on_fail_new_detail_on_success_result(self):
+        result = Result.ok(1, SuccessDetail())
+
+        new_result = result.on_fail_new_detail(ErrorDetail())
+
+        assert_result_with_type(self, new_result, success=True, value=1, detail_type=SuccessDetail)
+
+    def test_on_fail_new_detail(self):
+        result = Result.fail(ErrorDetail())
+
+        new_result = result.on_fail_new_detail(None)
+
+        assert_result(self, new_result, success=False)
+        self.assertIsNone(new_result.detail)
+
+    # endregion
+
     # region fail_when
 
     def test_fail_when_condition_is_false(self):

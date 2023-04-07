@@ -202,9 +202,19 @@ class Result:
         result.detail.add_more_data(f"previous error: {self.detail}")  # pragma: no cover
         return result  # pragma: no cover
 
-    #
-    # def on_fail_new_detail(self, new_detail: ErrorDetail):
-    #     pass  #
+    def on_fail_new_detail(self, new_detail: ErrorDetail):
+        """
+        This function updates the result detail with the new detail.
+
+        :param new_detail: new_detail is a parameter of type SuccessDetail that represents the new detail information to be
+        replaced to the current object
+        :type new_detail: ErrorDetail
+        :return: Returns result with new detail
+        """
+        if self.success:
+            return self
+        self.detail = new_detail
+        return self
     #
     # def on_fail_tee(self):
     #     pass  #
