@@ -1,28 +1,39 @@
+from typing import Coroutine
+
 from on_rails.Result import Result
 from on_rails.ResultDetails.Errors.ExceptionError import ExceptionError
+from on_rails.utility import await_func
 
 
-def def_result(func):
+def def_result(is_async: bool = False):
     """
-    A decorator function that wraps the return value of a function with a `Result`
-    object containing additional information such as success status and error messages.
+    A decorator that converts the output of a function into a Result, and can handle both
+    synchronous and asynchronous functions.
 
-    :arg: `func`: The function to wrap.
-    :return: The wrapped function.
+    :param is_async: A boolean parameter that indicates whether the decorated function is an asynchronous function or not.
+    If it is set to True, the decorator will return an asynchronous wrapper function that can be used with the asyncio
+    library, defaults to False
+    :type is_async: bool (optional)
+    :return: The function `def_result` returns the inner decorator function `inner_decorator`.
     """
 
-    def wrapper(*args, **kwargs):
-        """
-        It wraps a function and returns a Result object.
-        :return: a Result object.
-        """
-        try:
-            result_value = func(*args, **kwargs)
-            if isinstance(result_value, Result):
-                return result_value
-            result = Result.ok(value=result_value)
-        except Exception as e:
-            result = Result.fail(detail=ExceptionError(message=str(e), exception=e))
-        return result
+    def inner_decorator(func: callable):
+        def wrapper(*args, **kwargs):
+            try:
+                result = await_func(lambda: func(*args, **kwargs))
+                return Result.convert_to_result(result)
+            except Exception as e:
+                return Result.fail(detail=ExceptionError(message=str(e), exception=e))
 
-    return wrapper
+        async def wrapper_async(*args, **kwargs):
+            try:
+                result = func(*args, **kwargs)
+                if isinstance(result, Coroutine):
+                    result = await result
+                return Result.convert_to_result(result)
+            except Exception as e:
+                return Result.fail(detail=ExceptionError(message=str(e), exception=e))
+
+        return wrapper_async if is_async else wrapper
+
+    return inner_decorator

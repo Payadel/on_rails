@@ -46,47 +46,62 @@
 - [Authors & contributors](#authors--contributors)
 - [Security](#security)
 - [License](#license)
+
 </details>
 
 ## About
 
-`on_rails` is a library for **python**.
+`on_rails` is a **Railway Oriented** library for python.
 
-It is a library for functional error handling to improve **managing errors**.
+The Railway Oriented Programming (ROP) pattern separates the pure functional domain logic from the side effects, such as
+I/O, by representing them as a **sequence of functions** that return an Either type, representing either a
+successful `Result` or an error. This allows for better **composition** and **testing** of functions, as well as
+improving the code's **maintainability** and **readability**.
 
-It stores result of functions and provides a simple way to handle and manipulate the return values of functions, with built-in support for error
-handling and more.
+It also facilitates the **handling of errors**, as the error handling logic is separated from the main logic, making it
+easier to reason about and handle errors in a consistent and predictable manner. Overall, ROP can lead to more robust
+and reliable software systems.
 
-### Purpose
+### Error Handling
 
-In functional programming, it is not always appropriate to use traditional `try-except` blocks because they can lead to code
-that is difficult to read, understand, and maintain.
+In functional programming, it is not always appropriate to use traditional `try-except` blocks because they can lead to
+code that is difficult to read, understand, and maintain.
 
-The purpose of Functional Error Handling Libraries is to provide developers with a set of abstractions and tools for
-managing errors in a functional way.
-
-`on_rails` is a functional error handling library. The goal of this library is to make error handling m**ore explicit, composable, and testable**. By using this library, developers can write code that is **more robust, maintainable, and expressive**.
+`on_rails` supports functional error handling. The goal of this library is to make error handling **more explicit,
+composable, and testable**. By using this library, developers can write code that is **more robust, maintainable, and
+expressive**.
 
 ### Motivation
 
 The motivation behind this library is the desire to write code that is **more reliable, easier to understand, and less
-prone to errors**. In many cases, functional programming languages provide built-in abstractions for handling errors.
-However, for languages that do not have built-in support for functional error handling, libraries like this can provide
-a useful alternative.
+prone to errors**. In many cases, functional programming languages provide built-in abstractions for chaining functions
+and handling errors. However, for languages that do not have built-in support, libraries like this can provide a useful
+alternative.
 
 ### What problems are solved?
 
-This library can solve several problems, including:
+Railway Oriented Programming (ROP) solves several common problems in software development, such as:
 
-- Ensuring that error handling is consistent across an application.
-- Making it easier to test error handling code.
-- Making error handling code more readable and maintainable.
-- Encouraging developers to handle errors in a more functional way, which can lead to more reliable and robust code.
+- **Handling errors:** By using an Either (`Result`) type, ROP makes it easy to represent and handle errors in a
+  consistent and predictable manner, avoiding errors being thrown and allowing for error handling logic to be separated
+  from the main logic.
 
-Developers
-can spend less time debugging and more time writing code that adds value to their organization. Additionally, by using
-functional programming concepts, developers can write code that is easier to reason about and understand, which can lead
-to faster development cycles and better quality code.
+- **Composition:** ROP separates the pure functional domain logic from the side effects, such as I/O, by representing
+  them as a sequence of functions. This makes it easy to compose and chain functions together, enabling better code
+  reuse and maintainability.
+
+- **Readability:** The separation of pure functional domain logic from the side effects makes the code more readable and
+  understandable, as it makes it clear what each function does and how they relate to each other.
+
+- **Testing:** The pure functional domain logic can be easily tested, as it does not depend on any external state or
+  side effects. This simplifies testing and ensures that the code is correct.
+
+Overall, ROP provides a structured approach to software development that makes it easier to handle errors, compose
+functions, and test code, leading to more robust and reliable software systems.
+
+Developers can spend less time debugging and more time writing code that adds value to their organization. Additionally,
+by using functional programming concepts, developers can write code that is easier to reason about and understand, which
+can lead to faster development cycles and better quality code.
 
 ## Getting Started
 
@@ -150,10 +165,18 @@ Please see the [CHANGELOG](https://github.com/Payadel/on_rails/blob/main/CHANGEL
 
 - **Easy to use:** `on_rails` is designed to be simple and easy to use, with a minimal API and clear documentation.
 - **Compatibility with existing code:** `on_rails` can be easily added to existing codes without the need for major
-  refactoring. You can use decorator for wrap old functions or write new functions without worrying about incompatibilities.
-- **Save any details you like:** Thanks to the [ResultDetail](https://github.com/Payadel/on_rails/blob/main/on_rails/ResultDetail.py) class, you can store various information about the output of the function. Also, by inheriting from this class, you can write new and customized classes for your project.
-- **Special details for errors:** With the [ErrorDetail](https://github.com/Payadel/on_rails/blob/main/on_rails/ResultDetails/ErrorDetail.py) class, you can store specific details about errors. For example, this class supports **stack trace** in a built-in way.
-- **Support for common details by default:** In [this link](https://github.com/Payadel/on_rails/tree/main/on_rails/ResultDetails), you can see the different types of details that are supported.
+  refactoring. You can use decorator for wrap old functions or write new functions without worrying about
+  incompatibilities.
+- **Save any details you like:** Thanks to
+  the [ResultDetail](https://github.com/Payadel/on_rails/blob/main/on_rails/ResultDetail.py) class, you can store
+  various information about the output of the function. Also, by inheriting from this class, you can write new and
+  customized classes for your project.
+- **Special details for errors:** With
+  the [ErrorDetail](https://github.com/Payadel/on_rails/blob/main/on_rails/ResultDetails/ErrorDetail.py) class, you can
+  store specific details about errors. For example, this class supports **stack trace** in a built-in way.
+- **Support for common details by default:**
+  In [this link](https://github.com/Payadel/on_rails/tree/main/on_rails/ResultDetails), you can see the different types
+  of details that are supported.
 
 ## Roadmap
 
@@ -177,11 +200,13 @@ Reach out to the maintainers at one of the following places:
 
 **not necessarily.** You can add this library and write new functions without changing the previous codes.
 
-Also for old functions, you can use **decorator**. By using decorator, The output of the function is converted to `Result` format. This way, your code is wrap in a `try-except` block to handle all exceptions.
+Also for old functions, you can use **decorator**. By using decorator, The output of the function is converted
+to `Result` format. This way, your code is wrap in a `try-except` block to handle all exceptions.
 
 #### How to manage all function exceptions?
 
-By using decorator, your code is wrap in a `try-except` block and the final output is converted to Result. In this way, all exceptions are handled.
+By using decorator, your code is wrap in a `try-except` block and the final output is converted to Result. In this way,
+all exceptions are handled.
 
 ## Project assistance
 
@@ -201,10 +226,12 @@ First off, thanks for taking the time to contribute! Contributions are what make
 amazing place to learn, inspire, and create. Any contributions you make will benefit everybody else and are **greatly
 appreciated**.
 
-Please read [our contribution guidelines](https://github.com/Payadel/on_rails/blob/main/docs/CONTRIBUTING.md), and thank you for being involved!
+Please read [our contribution guidelines](https://github.com/Payadel/on_rails/blob/main/docs/CONTRIBUTING.md), and thank
+you for being involved!
 
-Please do not forget that this project uses [conventional commits](https://www.conventionalcommits.org), so please follow the specification in your commit messages.
-You can see valid types from [this file](https://github.com/Payadel/on_rails/blob/main/.configs/commitlint.config.js).
+Please do not forget that this project uses [conventional commits](https://www.conventionalcommits.org), so please
+follow the specification in your commit messages. You can see valid types
+from [this file](https://github.com/Payadel/on_rails/blob/main/.configs/commitlint.config.js).
 
 ## Authors & contributors
 
@@ -215,10 +242,11 @@ see [the contributors page](https://github.com/Payadel/on_rails/contributors).
 
 ## Security
 
-`on_rails` follows good practices of security, but 100% security cannot be assured. `on_rails` is provided **"as
-is"** without any **warranty**.
+`on_rails` follows good practices of security, but 100% security cannot be assured. `on_rails` is provided **"as is"**
+without any **warranty**.
 
-_For more information and to report security issues, please refer to our [security documentation](https://github.com/Payadel/on_rails/blob/main/docs/SECURITY.md)._
+_For more information and to report security issues, please refer to
+our [security documentation](https://github.com/Payadel/on_rails/blob/main/docs/SECURITY.md)._
 
 ## License
 
