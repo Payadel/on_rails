@@ -134,9 +134,20 @@ class Result:
         result = try_func(lambda: self.detail.add_more_data(more_data))
         return self if result.success else result
 
-    #
-    # def on_success_new_detail(self, new_detail: SuccessDetail):
-    #     pass  #
+    def on_success_new_detail(self, new_detail: SuccessDetail):
+        """
+        This function updates the result detail with the new detail.
+
+        :param new_detail: new_detail is a parameter of type SuccessDetail that represents the new detail information to be
+        replaced to the current object
+        :type new_detail: SuccessDetail
+        :return: Returns result with new detail
+        """
+        if not self.success:
+            return self
+        self.detail = new_detail
+        return self
+
     #
     # def on_success_tee(self):
     #     pass  #
