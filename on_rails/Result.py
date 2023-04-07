@@ -119,14 +119,27 @@ class Result:
             return self
         return self.try_func(func, num_of_try, try_only_on_exceptions)
 
-    # def on_success_add_more_data(self, more_data: object):
-    #     pass  # TODO: Complete this method
+    def on_success_add_more_data(self, more_data: object):
+        """
+        This function adds more data to the success detail if the current result is successful.
+
+        :param more_data: more_data is an object that contains additional data to be added to the success response
+        :type more_data: object
+        :return: either `ok` or `fail` result, depending on the success of adding more data to the `SuccessDetail` object.
+        """
+        if not self.success or not more_data:
+            return self
+        if not self.detail:
+            self.detail = SuccessDetail()
+        result = try_func(lambda: self.detail.add_more_data(more_data))
+        return self if result.success else result
+
     #
     # def on_success_new_detail(self, new_detail: SuccessDetail):
-    #     pass  # TODO: Complete this method
+    #     pass  #
     #
     # def on_success_tee(self):
-    #     pass  # TODO: Complete this method
+    #     pass  #
 
     # endregion
 
@@ -155,16 +168,16 @@ class Result:
                              try_only_on_exceptions=try_only_on_exceptions)
 
     # def on_fail_add_more_data(self, more_data: object):
-    #     pass  # TODO: Complete this method
+    #     pass  #
     #
     # def on_fail_new_detail(self, new_detail: ErrorDetail):
-    #     pass  # TODO: Complete this method
+    #     pass  #
     #
     # def on_fail_tee(self):
-    #     pass  # TODO: Complete this method
+    #     pass  #
     #
     # def on_fail_raise_exception(self):
-    #     pass  # TODO: Complete this method
+    #     pass  #
 
     # endregion
 
@@ -184,7 +197,7 @@ class Result:
             return self
 
         error_detail = error_detail if error_detail else ErrorDetail()
-        if add_prev_detail:
+        if add_prev_detail and self.detail:
             error_detail.add_more_data({"prev_detail": self.detail})
         return Result.fail(error_detail)
 
