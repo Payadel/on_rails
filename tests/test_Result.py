@@ -332,7 +332,7 @@ class TestResult(unittest.TestCase):
                             code=500)
 
     def test_try_func_without_parameters_on_failed_result_with_skip_previous_error(self):
-        result = Result.fail().try_func(lambda: 5, skip_previous_error=True)
+        result = Result.fail().try_func(lambda: 5, ignore_previous_error=True)
 
         assert_result(self, result, success=True, value=5)
 
