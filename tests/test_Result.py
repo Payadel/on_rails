@@ -6,8 +6,8 @@ from on_rails.Result import Result, try_func
 from on_rails.ResultDetail import ResultDetail
 from on_rails.ResultDetails import SuccessDetail
 from on_rails.ResultDetails.Errors import BadRequestError
-from tests.helpers import (assert_error_detail, assert_exception,
-                           assert_result, assert_result_with_type)
+from tests.helpers import (assert_error_detail, assert_result,
+                           assert_result_with_type)
 
 FAKE_EXCEPTION = Exception("fake")
 FAKE_ERROR = ErrorDetail("fake")
@@ -23,6 +23,8 @@ async def async_function():
 
 
 class TestResult(unittest.TestCase):
+    # region __init__
+
     def test_init_without_optional_args(self):
         result = Result(True)
 
@@ -34,6 +36,10 @@ class TestResult(unittest.TestCase):
         result = Result(success=True, detail=detail, value=value)
 
         assert_result(self, result=result, success=True, detail=detail, value=value)
+
+    # endregion
+
+    # region ok
 
     def test_ok_without_optional_args(self):
         result = Result.ok()
@@ -47,6 +53,10 @@ class TestResult(unittest.TestCase):
 
         assert_result(self, result=result, success=True, detail=detail, value=value)
 
+    # endregion
+
+    # region fail
+
     def test_fail_without_optional_args(self):
         result = Result.fail()
 
@@ -57,6 +67,10 @@ class TestResult(unittest.TestCase):
         result = Result.fail(detail=detail)
 
         assert_result(self, result=result, success=False, detail=detail)
+
+    # endregion
+
+    # region code
 
     def test_code_without_detail_and_without_args(self):
         # Success
@@ -96,6 +110,10 @@ class TestResult(unittest.TestCase):
         result = Result.fail(detail=detail)
         self.assertEqual(100, result.code(default_success_code=0, default_error_code=1))
 
+    # endregion
+
+    # region __str__
+
     def test_str_success_without_args(self):
         result = Result.ok()
         self.assertEqual("success: True\n", str(result))
@@ -111,6 +129,10 @@ class TestResult(unittest.TestCase):
     def test_str_with_detail_(self):
         result = Result.ok(detail=SuccessDetail(message="test"))
         self.assertTrue(str(result).startswith("success: True\nDetail:\n"))
+
+    # endregion
+
+    # region on_success
 
     def test_on_success_with_fail_result(self):
         fail_result = Result.fail()
@@ -157,6 +179,10 @@ class TestResult(unittest.TestCase):
                             message="Operation failed with 2 attempts. The details of the 2 errors are stored in the more_data field. At least one of the errors was an exception type, the first exception being stored in the exception field.",
                             exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION], code=500)
 
+    # endregion
+
+    # region on_fail
+
     def test_on_fail_with_success_result(self):
         success_result = Result.ok(5)
 
@@ -195,6 +221,10 @@ class TestResult(unittest.TestCase):
                             message="Operation failed with 2 attempts. The details of the 2 errors are stored in the more_data field. At least one of the errors was an exception type, the first exception being stored in the exception field.",
                             exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION], code=500)
 
+    # endregion
+
+    # region fail_when
+
     def test_fail_when_condition_is_false(self):
         result = Result.ok(1).fail_when(False)
 
@@ -219,6 +249,10 @@ class TestResult(unittest.TestCase):
         assert_error_detail(self, error_detail=result.detail, title="An error occurred", code=500,
                             more_data=[{'prev_detail': None}])
 
+    # endregion
+
+    # region convert_to_result
+
     def test_convert_to_result_give_none(self):
         result = Result.convert_to_result(None)
         assert_result(self, result, success=True)
@@ -236,6 +270,10 @@ class TestResult(unittest.TestCase):
     def test_convert_to_result_give_value(self):
         result = Result.convert_to_result(5)
         assert_result(self, result, success=True, value=5)
+
+    # endregion
+
+    # region try_func
 
     def test_try_func_give_none(self):
         result = try_func(None)
@@ -381,6 +419,8 @@ class TestResult(unittest.TestCase):
         self.assertFalse(result.success)
         assert_error_detail(self, error_detail=result.detail, title="An error occurred",
                             message='<lambda>() takes 2 arguments. It cannot be executed.', code=500)
+
+    # endregion
 
 
 if __name__ == "__main__":
