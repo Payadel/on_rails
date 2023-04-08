@@ -4,6 +4,7 @@ from on_rails._utility import (await_func, generate_error,
                                get_num_of_function_parameters)
 from on_rails.ResultDetail import ResultDetail
 from on_rails.ResultDetails.ErrorDetail import ErrorDetail
+from on_rails.ResultDetails.Errors.ValidationError import ValidationError
 from on_rails.ResultDetails.SuccessDetail import SuccessDetail
 
 
@@ -115,9 +116,22 @@ class Result:
 
         :return: The method `on_success` returns either self or the result of given function.
         """
+        return try_func(lambda: self.__on_success(func, num_of_try, try_only_on_exceptions))
+
+    def __on_success(self, func: callable, num_of_try: int = 1, try_only_on_exceptions=True):
         if not self.success:
             return self
-        return self.try_func(func, num_of_try, try_only_on_exceptions)
+
+        num_of_function_params = get_num_of_function_parameters(func)
+        if num_of_function_params == 0:
+            return try_func(func, num_of_try, try_only_on_exceptions)
+        if num_of_function_params == 1:
+            return try_func(lambda: func(self.value), num_of_try, try_only_on_exceptions)
+        if num_of_function_params == 2:
+            return try_func(lambda: func(self.value, self), num_of_try, try_only_on_exceptions)
+        return Result.fail(ValidationError(
+            message=f"{func.__name__}() takes {num_of_function_params} arguments. It cannot be executed."
+                    "maximum of two parameters is acceptable."))
 
     def on_success_add_more_data(self, more_data: object):
         """

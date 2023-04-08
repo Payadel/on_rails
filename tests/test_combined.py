@@ -18,7 +18,7 @@ def raise_exception():
 class TestCombined(unittest.TestCase):
     def test1(self):
         result = Result.ok() \
-            .on_success(lambda prev: 5) \
+            .on_success(lambda value: 5) \
             .on_success_add_more_data("success data") \
             .on_success_new_detail(
             CreatedDetail()) \
@@ -31,7 +31,7 @@ class TestCombined(unittest.TestCase):
 
     def test2(self):
         result = Result.convert_to_result(5) \
-            .on_success(lambda prev: prev.value + 5) \
+            .on_success(lambda value: value + 5) \
             .on_success_add_more_data(
             "success data") \
             .on_success_new_detail(CreatedDetail()) \

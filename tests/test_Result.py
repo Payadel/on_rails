@@ -8,6 +8,7 @@ from on_rails.Result import Result, try_func
 from on_rails.ResultDetail import ResultDetail
 from on_rails.ResultDetails import SuccessDetail
 from on_rails.ResultDetails.Errors import BadRequestError
+from on_rails.ResultDetails.Errors.ValidationError import ValidationError
 from tests.helpers import (assert_error_detail, assert_result,
                            assert_result_with_type)
 
@@ -157,12 +158,15 @@ class TestResult(unittest.TestCase):
 
         assert_result(self, func_result, success=True)
 
-    def test_on_success_use_prev_result(self):
-        result = Result.ok(1)
+    def test_on_success_use_prev_value(self):
+        func_result = Result.ok(1).on_success(lambda value: value + 1)
 
-        func_result = result.on_success(lambda prev: prev)
+        assert_result(self, func_result, success=True, value=2)
 
-        self.assertEqual(result, func_result)
+    def test_on_success_use_prev_values(self):
+        func_result = Result.ok(1).on_success(lambda value, result: value + result.value)
+
+        assert_result(self, func_result, success=True, value=2)
 
     def test_on_success_give_func_fail(self):
         success_result = Result.ok(1)
@@ -170,6 +174,11 @@ class TestResult(unittest.TestCase):
         func_result = success_result.on_success(lambda: Result.fail())
 
         assert_result(self, func_result, success=False)
+
+    def test_on_success_give_too_many_args(self):
+        func_result = Result.ok(1).on_success(lambda a, b, c: Result.ok())
+
+        assert_result_with_type(self, func_result, success=False, detail_type=ValidationError)
 
     def test_on_success_give_func_raise_exception(self):
         success_result = Result.ok(1)
