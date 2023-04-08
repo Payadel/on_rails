@@ -1,3 +1,5 @@
+# pylint: disable=all
+
 import asyncio
 import unittest
 from typing import Coroutine

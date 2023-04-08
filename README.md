@@ -111,7 +111,7 @@ can lead to faster development cycles and better quality code.
 
 Use `pip` to install package:
 
-`pip install on_rails`
+`pip install on_rails --upgrade`
 
 ## Usage
 
