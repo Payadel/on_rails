@@ -38,9 +38,9 @@ repos:
 
   - repo: local
     hooks:
-      - id: check-pytest-before-push
-        name: check pytest before push
+      - id: check-tox-before-push
+        name: check tox before push
         language: script
-        entry: .hooks/check-pytest.sh
-        args: [ "--disable-pytest-warnings" ]
+        entry: .hooks/check-tox.sh
+        args: [ "dev" ]
         stages: [ push ]
