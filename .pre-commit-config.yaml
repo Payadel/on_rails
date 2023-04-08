@@ -44,3 +44,4 @@ repos:
         entry: .hooks/check-tox.sh
         args: [ "dev" ]
         stages: [ push ]
+        verbose: true
