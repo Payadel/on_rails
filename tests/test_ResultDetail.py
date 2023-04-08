@@ -1,3 +1,5 @@
+# pylint: disable=all
+
 import unittest
 
 from on_rails.ResultDetail import ResultDetail
