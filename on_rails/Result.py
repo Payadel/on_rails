@@ -1,7 +1,7 @@
 from typing import Any, Optional
 
 from on_rails._utility import (await_func, generate_error,
-                               get_num_of_function_parameters)
+                               get_num_of_function_parameters, is_func_valid)
 from on_rails.ResultDetail import ResultDetail
 from on_rails.ResultDetails.ErrorDetail import ErrorDetail
 from on_rails.ResultDetails.Errors.ValidationError import ValidationError
@@ -119,7 +119,7 @@ class Result:
         return try_func(lambda: self.__on_success(func, num_of_try, try_only_on_exceptions))
 
     def __on_success(self, func: callable, num_of_try: int = 1, try_only_on_exceptions=True):
-        if func is None or not callable(func):
+        if not is_func_valid(func):
             return Result.fail(ValidationError(message="The input function is not valid."))
 
         if not self.success:
@@ -182,7 +182,9 @@ class Result:
         :type try_only_on_exceptions: bool (optional)
         :return: an instance of the class that it belongs to (presumably named `self`).
         """
-        if not self.success or func is None:
+        if not is_func_valid(func):
+            return Result.fail(ValidationError(message="The input function is not valid."))
+        if not self.success:
             return self
         try_func(func, num_of_try, try_only_on_exceptions)  # ignore result
         return self
@@ -208,6 +210,8 @@ class Result:
 
         :return: The result object is being returned.
         """
+        if not is_func_valid(func):
+            return Result.fail(ValidationError(message="The input function is not valid."))
         if self.success:
             return self
         return self.try_func(func, num_of_try, ignore_previous_error=True,
@@ -268,7 +272,9 @@ class Result:
         :type try_only_on_exceptions: bool (optional)
         :return: an instance of the class that it belongs to (presumably named `self`).
         """
-        if self.success or func is None:
+        if not is_func_valid(func):
+            return Result.fail(ValidationError(message="The input function is not valid."))
+        if self.success:
             return self
         try_func(func, num_of_try, try_only_on_exceptions)  # ignore result
         return self
@@ -335,7 +341,7 @@ class Result:
     :return: a `Result` object.
         :return: an instance of the `Result` class, which contains either a successful result or an error message.
         """
-        if func is None or not callable(func):
+        if not is_func_valid(func):
             return Result.fail(ValidationError(message="The input function is not valid."))
 
         num_of_function_params = get_num_of_function_parameters(func)
@@ -369,7 +375,7 @@ def try_func(func: callable, num_of_try: int = 1, try_only_on_exceptions: bool =
     :type try_only_on_exceptions: bool (optional)
     :return: a `Result` object.
     """
-    if func is None or not callable(func):
+    if not is_func_valid(func):
         return Result.fail(ValidationError(message="The input function is not valid."))
 
     num_of_function_params = get_num_of_function_parameters(func)

@@ -69,3 +69,16 @@ def generate_error(errors: List[Any], num_of_try: int) -> ErrorDetail:
 
     message += "There is no more information."
     return ErrorDetail(message=message)
+
+
+def is_func_valid(func):
+    """
+    Checks if a given input is a valid callable function or not.
+
+    :param func: The parameter `func` is expected to be a function object. The `is_func_valid` function checks if the `func`
+    parameter is not `None` and is callable (i.e., it can be called as a function). If both conditions are true, it returns
+    `True`
+    :return: Returns a boolean value. It returns `True` if the input `func` is not `None` and
+    is callable (i.e. can be called as a function), and `False` otherwise.
+    """
+    return func is not None and callable(func)

@@ -258,11 +258,22 @@ class TestResult(unittest.TestCase):
 
     # region on_success_tee
 
-    def test_on_success_tee(self):
-        result = Result.ok(1)
-        new_result = result.on_success_tee(None)
-        assert_result(self, new_result, success=True, value=1)
+    def test_on_success_tee_give_invalid_func(self):
+        # None
+        result = Result.ok(1).on_success_tee(None)
 
+        assert_result_with_type(test_class=self, result= result, success=False, detail_type=ValidationError)
+        assert_error_detail(test_class=self, error_detail=result.detail, title='One or more validation errors occurred',
+                            message="The input function is not valid.", code=400)
+
+        # Not callable
+        result = Result.ok(1).on_success_tee("string")
+
+        assert_result_with_type(test_class=self, result= result, success=False, detail_type=ValidationError)
+        assert_error_detail(test_class=self, error_detail=result.detail, title='One or more validation errors occurred',
+                            message="The input function is not valid.", code=400)
+
+    def test_on_success_tee(self):
         result = Result.ok(1)
         new_result = result.on_success_tee(lambda: Result.fail())
         assert_result(self, new_result, success=True, value=1)
@@ -326,7 +337,7 @@ class TestResult(unittest.TestCase):
 
         new_result = result.on_fail_add_more_data(None)
 
-        assert_result(self, new_result, success=False,)
+        assert_result(self, new_result, success=False, )
         self.assertIsNone(new_result.detail)
 
     def test_on_fail_add_more_data_give_object(self):
@@ -349,11 +360,22 @@ class TestResult(unittest.TestCase):
 
     # region on_fail_tee
 
-    def test_on_fail_tee(self):
-        result = Result.fail()
-        new_result = result.on_fail_tee(None)
-        assert_result(self, new_result, success=False)
+    def test_on_fail_tee_give_invalid_func(self):
+        # None
+        result = Result.fail().on_fail_tee(None)
 
+        assert_result_with_type(test_class=self, result=result, success=False, detail_type=ValidationError)
+        assert_error_detail(test_class=self, error_detail=result.detail, title='One or more validation errors occurred',
+                            message="The input function is not valid.", code=400)
+
+        # Not callable
+        result = Result.fail().on_fail_tee("string")
+
+        assert_result_with_type(test_class=self, result=result, success=False, detail_type=ValidationError)
+        assert_error_detail(test_class=self, error_detail=result.detail, title='One or more validation errors occurred',
+                            message="The input function is not valid.", code=400)
+
+    def test_on_fail_tee(self):
         result = Result.fail()
         new_result = result.on_fail_tee(lambda: Result.ok())
         assert_result(self, new_result, success=False)
@@ -398,7 +420,6 @@ class TestResult(unittest.TestCase):
         except Exception as e:
             self.assertEqual(Exception, type(e))
             self.assertTrue(str(e) != "" or None)
-
 
     # endregion
 
