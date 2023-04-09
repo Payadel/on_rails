@@ -703,6 +703,60 @@ class TestResult(unittest.TestCase):
 
     # endregion
 
+    # region operate_when
+
+    def test_operate_when_give_bool_condition(self):
+        result = Result.ok(1).operate_when(True, lambda: Result.fail())
+        assert_result(self, result, success=False)
+
+        result = Result.ok(1).operate_when(False, lambda: Result.fail())
+        assert_result(self, result, success=True, value=1)
+
+    def test_operate_when_give_func_as_condition_failed(self):
+        result = Result.ok(1).operate_when(lambda: Result.fail(FAKE_ERROR), lambda: Result.fail())
+
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, error_detail=result.detail, title="fake", code=500)
+
+    def test_operate_when_give_func_as_condition(self):
+        # True
+        result = Result.ok(1).operate_when(lambda: True, lambda: Result.fail())
+        assert_result(self, result, success=False)
+        result = Result.ok(1).operate_when(lambda: Result.ok(), lambda: Result.fail())
+        assert_result(self, result, success=False)
+        result = Result.ok(1).operate_when(lambda: Result.ok("Value is not instance of bool"), lambda: Result.fail())
+        assert_result(self, result, success=False)
+        result = Result.ok(1).operate_when(lambda: Result.ok(True), lambda: Result.fail())
+        assert_result(self, result, success=False)
+        result = Result.ok(1).operate_when(lambda prev: Result.ok(prev.value), lambda: Result.fail())
+        assert_result(self, result, success=False)
+
+        # False
+        result = Result.ok(1).operate_when(lambda: False, lambda: Result.fail())
+        assert_result(self, result, success=True, value=1)
+        result = Result.ok(1).operate_when(lambda: Result.ok(False), lambda: Result.fail())
+        assert_result(self, result, success=True, value=1)
+        result = Result.ok(1).operate_when(lambda prev: Result.ok(not prev.value), lambda: Result.fail())
+        assert_result(self, result, success=True, value=1)
+
+    def test_operate_when_give_func_with_too_many_args(self):
+        result = Result.ok(1).operate_when(lambda a, b: True, lambda: Result.fail())
+
+        assert_result_with_type(test_class=self, result=result, success=False, detail_type=ValidationError)
+        assert_error_detail(self, error_detail=result.detail, title="One or more validation errors occurred",
+                            message='<lambda>() takes 2 arguments. It cannot be executed. '
+                                    'maximum of 1 parameters is acceptable.', code=400)
+
+    def test_operate_when_give_invalid_condition_type(self):
+        result = Result.ok(1).operate_when("This is not boolean or function", lambda: Result.fail())
+
+        assert_result_with_type(test_class=self, result=result, success=False, detail_type=ValidationError)
+        assert_error_detail(self, error_detail=result.detail, title="One or more validation errors occurred",
+                            message='The condition only can be a function or a boolean. '
+                                    'str is not acceptable.', code=400)
+
+    # endregion
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,4 +1,4 @@
-from typing import Any, Callable, Generic, List, Optional, TypeVar
+from typing import Any, Callable, Generic, List, Optional, TypeVar, Union
 
 from on_rails._utility import (await_func, generate_error,
                                get_num_of_function_parameters, is_func_valid)
@@ -305,6 +305,38 @@ class Result(Generic[T]):
             error_detail.add_more_data({"prev_detail": self.detail})
         return Result.fail(error_detail)
 
+    def operate_when(self, condition_or_func: Union[Callable, bool], func: Callable,
+                     num_of_try: int = 1, try_only_on_exceptions=True):
+        """
+        This function takes a condition or function, and if it passes, it calls another function
+
+        :param condition_or_func: The condition or function that needs to be checked before calling the main function. It
+        can be either a boolean value or a callable function that returns a boolean value
+        :type condition_or_func: Union[Callable, bool]
+
+        :param func: `func` is a callable object (function, method, lambda function, etc.) that will be executed if the
+        `condition_or_func` parameter evaluates to `True`.
+        The `self` parameter is passed as the first argument to `func` optionally.
+        :type func: Callable
+
+        :param num_of_try: The `num_of_try` parameter is an optional integer parameter that specifies the number of times to
+        try executing the function `func` if it fails due to an exception. If `num_of_try` is not specified, the function
+        will only be executed once, defaults to 1
+        :type num_of_try: int (optional)
+
+        :param try_only_on_exceptions: `try_only_on_exceptions` is a boolean parameter that determines whether the `func`
+        should only be retried if an exception is raised or not.
+
+        :return: If condition pass, returns result of function as Result object.
+        If condition not pass, returns previous Result object.
+        """
+        result = self.__is_condition_pass(condition_or_func, num_of_try, try_only_on_exceptions)
+        if not result.success:
+            return result
+        if not result.value:
+            return self
+        return self.__call_func(func, [self], num_of_try, try_only_on_exceptions)
+
     def try_func(self, func: Callable, num_of_try: int = 1,
                  ignore_previous_error: bool = False, try_only_on_exceptions: bool = True):
         """
@@ -360,6 +392,26 @@ class Result(Generic[T]):
                         f"maximum of {len(optional_args)} parameters is acceptable."))
 
         return try_func(lambda: func(*optional_args[:num_of_function_params]), num_of_try, try_only_on_exceptions)
+
+    def __is_condition_pass(self, condition_or_func: Union[Callable, bool],
+                            num_of_try: int = 1, try_only_on_exceptions: bool = True):
+        """
+        This function checks if a given condition or function is true or false and returns a result accordingly.
+        """
+
+        if isinstance(condition_or_func, bool):
+            return Result.ok(condition_or_func)
+
+        if not callable(condition_or_func):
+            return Result.fail(ValidationError(message=f"The condition only can be a function or a boolean. "
+                                                       f"{type(condition_or_func).__name__} is not acceptable."))
+
+        result = self.__call_func(condition_or_func, [self], num_of_try, try_only_on_exceptions)
+        if not result.success:
+            return result
+        if result.value is not None and isinstance(result.value, bool):
+            return Result.ok(result.value)
+        return Result.ok(True)
 
     # endregion
 
