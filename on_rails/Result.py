@@ -133,7 +133,7 @@ class Result:
         if num_of_function_params == 2:
             return try_func(lambda: func(self.value, self), num_of_try, try_only_on_exceptions)
         return Result.fail(ValidationError(
-            message=f"{func.__name__}() takes {num_of_function_params} arguments. It cannot be executed."
+            message=f"{func.__name__}() takes {num_of_function_params} arguments. It cannot be executed. "
                     "maximum of two parameters is acceptable."))
 
     def on_success_add_more_data(self, more_data: object):
@@ -183,11 +183,7 @@ class Result:
         :param ignore_errors: If it is false, it will return the error result when the result of the function fails, otherwise it will be ignored.
         :type ignore_errors: bool (optional)
         """
-        if not is_func_valid(func):
-            return Result.fail(ValidationError(message="The input function is not valid."))
-        if not self.success:
-            return self
-        result = try_func(func, num_of_try, try_only_on_exceptions)
+        result = self.__on_success(func, num_of_try, try_only_on_exceptions)
         if result.success or ignore_errors:
             return self  # ignore result
         return result
