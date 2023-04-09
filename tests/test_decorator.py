@@ -4,8 +4,9 @@ import asyncio
 import unittest
 from typing import Coroutine
 
-from on_rails import Result, def_result
-from on_rails.ResultDetails.Errors import BadRequestError
+from on_rails.decorator import def_result
+from on_rails.Result import Result
+from on_rails.ResultDetails.Errors.BadRequestError import BadRequestError
 from tests.helpers import assert_result, assert_result_detail
 
 

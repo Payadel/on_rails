@@ -3,12 +3,12 @@
 import asyncio
 import unittest
 
-from on_rails import ErrorDetail
 from on_rails.Result import Result, try_func
 from on_rails.ResultDetail import ResultDetail
-from on_rails.ResultDetails import SuccessDetail
-from on_rails.ResultDetails.Errors import BadRequestError
+from on_rails.ResultDetails.ErrorDetail import ErrorDetail
+from on_rails.ResultDetails.Errors.BadRequestError import BadRequestError
 from on_rails.ResultDetails.Errors.ValidationError import ValidationError
+from on_rails.ResultDetails.SuccessDetail import SuccessDetail
 from tests.helpers import (assert_error_detail, assert_invalid_func,
                            assert_result, assert_result_with_type)
 

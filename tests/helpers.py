@@ -3,10 +3,10 @@
 import unittest
 from typing import Any, Dict, List, Optional
 
-from on_rails import ExceptionError
 from on_rails.Result import Result
 from on_rails.ResultDetail import ResultDetail
 from on_rails.ResultDetails.ErrorDetail import ErrorDetail
+from on_rails.ResultDetails.Errors import ExceptionError
 from on_rails.ResultDetails.Errors.ValidationError import ValidationError
 
 
