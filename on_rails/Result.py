@@ -116,6 +116,8 @@ class Result:
 
         :return: The method `on_success` returns either self or the result of given function.
         """
+        if func is None or not callable(func):
+            return Result.fail(ValidationError(message="The input function is not valid."))
         return try_func(lambda: self.__on_success(func, num_of_try, try_only_on_exceptions))
 
     def __on_success(self, func: callable, num_of_try: int = 1, try_only_on_exceptions=True):
@@ -368,6 +370,8 @@ def try_func(func: callable, num_of_try: int = 1, try_only_on_exceptions: bool =
     """
     if func is None:
         return Result.fail(ErrorDetail(message="The input function can not be None."))
+    if not callable(func):
+        return Result.fail(ErrorDetail(message=f"{func} is not callable."))
 
     num_of_function_params = get_num_of_function_parameters(func)
     if num_of_function_params > 0:

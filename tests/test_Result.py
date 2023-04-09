@@ -137,6 +137,14 @@ class TestResult(unittest.TestCase):
 
     # region on_success
 
+    def test_on_success_give_none(self):
+        func_result = Result.ok().on_success(func=None)
+
+        assert_result_with_type(test_class=self, result=func_result, success=False, detail_type=ValidationError)
+        assert_error_detail(test_class=self, error_detail=func_result.detail,
+                            title="One or more validation errors occurred",
+                            message="The input function is not valid.", code=400)
+
     def test_on_success_with_fail_result(self):
         fail_result = Result.fail()
 
