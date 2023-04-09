@@ -282,6 +282,19 @@ class TestResult(unittest.TestCase):
 
     # region on_fail
 
+    def test_on_fail_give_invalid_func(self):
+        # None
+        result = Result.fail().on_fail(None)
+        assert_result_with_type(test_class=self, result= result, success=False, detail_type=ValidationError)
+        assert_error_detail(test_class=self, error_detail=result.detail, title='One or more validation errors occurred',
+                            message="The input function is not valid.", code=400)
+
+        # Not callable
+        result = Result.fail().on_fail("not callable")
+        assert_result_with_type(test_class=self, result= result, success=False, detail_type=ValidationError)
+        assert_error_detail(test_class=self, error_detail=result.detail, title='One or more validation errors occurred',
+                            message="The input function is not valid.", code=400)
+
     def test_on_fail_with_success_result(self):
         success_result = Result.ok(5)
 
