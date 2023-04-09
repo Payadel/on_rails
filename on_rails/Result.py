@@ -165,29 +165,32 @@ class Result:
         self.detail = new_detail
         return self
 
-    def on_success_tee(self, func: callable, num_of_try: int = 1, try_only_on_exceptions=True):
+    def on_success_tee(self, func: callable, num_of_try: int = 1, try_only_on_exceptions=True,
+                       ignore_errors: bool = False):
         """
-        This function executes a given function only if the previous operation was successful and returns the original
-        object. the function result will be ignored.
+        This function executes a given function and returns the previous result if successful, or the result of the given
+        function if it fails.
 
-        :param func: func is a callable object, which means it is a function or a method that can be called. It is the
-        function that will be executed if the previous operation was successful
+        :param func: The function that will be executed
         :type func: callable
-        :param num_of_try: The parameter `num_of_try` is an integer that specifies the number of times the `func` should be
-        tried in case of failure. If `num_of_try` is not specified, it defaults to 1
+
+        :param num_of_try: The number of times the function should be attempted if it fails, defaults to 1
         :type num_of_try: int (optional)
-        :param try_only_on_exceptions: A boolean parameter that determines whether the function should only be retried if an
-        exception is raised. If set to True, the function will only be retried if an exception is raised. If set to False, the
-        function will be retried regardless of whether an exception is raised or Result is not success, defaults to True
-        :type try_only_on_exceptions: bool (optional)
-        :return: an instance of the class that it belongs to (presumably named `self`).
+
+        :param try_only_on_exceptions: If set to True, the function will only be tried if an exception is raised,
+        otherwise it also will try if the result is not success, defaults to True
+
+        :param ignore_errors: If it is false, it will return the error result when the result of the function fails, otherwise it will be ignored.
+        :type ignore_errors: bool (optional)
         """
         if not is_func_valid(func):
             return Result.fail(ValidationError(message="The input function is not valid."))
         if not self.success:
             return self
-        try_func(func, num_of_try, try_only_on_exceptions)  # ignore result
-        return self
+        result = try_func(func, num_of_try, try_only_on_exceptions)
+        if result.success or ignore_errors:
+            return self  # ignore result
+        return result
 
     # endregion
 
@@ -255,7 +258,8 @@ class Result:
         self.detail = new_detail
         return self
 
-    def on_fail_tee(self, func: callable, num_of_try: int = 1, try_only_on_exceptions=True):
+    def on_fail_tee(self, func: callable, num_of_try: int = 1, try_only_on_exceptions=True,
+                    ignore_errors: bool = False):
         """
         This function executes a given function only if the previous operation was not successful and returns the original
         object. the function result will be ignored.
@@ -270,14 +274,17 @@ class Result:
         exception is raised. If set to True, the function will only be retried if an exception is raised. If set to False, the
         function will be retried regardless of whether an exception is raised or Result is not success, defaults to True
         :type try_only_on_exceptions: bool (optional)
+        :param ignore_errors: If it is false, it will return the error result when the result of the function fails, otherwise it will be ignored.
         :return: an instance of the class that it belongs to (presumably named `self`).
         """
         if not is_func_valid(func):
             return Result.fail(ValidationError(message="The input function is not valid."))
         if self.success:
             return self
-        try_func(func, num_of_try, try_only_on_exceptions)  # ignore result
-        return self
+        result = try_func(func, num_of_try, try_only_on_exceptions)
+        if result.success or ignore_errors:
+            return self  # ignore result
+        return result
 
     def on_fail_raise_exception(self, exception_type: Optional[type] = None):
         """
