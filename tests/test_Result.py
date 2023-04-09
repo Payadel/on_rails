@@ -787,6 +787,40 @@ class TestResult(unittest.TestCase):
 
     # endregion
 
+    # region finally_tee
+
+    def test_finally_tee_ok(self):
+        result = Result.ok(1).finally_tee(lambda: Result.ok(5))
+        assert_result(self, result, success=True, value=1)
+
+        result = Result.fail().finally_tee(lambda: Result.ok(5))
+        assert_result(self, result, success=False)
+
+    def test_finally_tee_use_prev_result_ok(self):
+        result = Result.ok(1).finally_tee(lambda prev_result: Result.ok(prev_result.value + 1))
+        assert_result(self, result, success=True, value=1)
+
+        result = Result.fail().finally_tee(lambda prev_result: Result.ok(prev_result.success))
+        assert_result(self, result, success=False)
+
+    def test_finally_tee_fail(self):
+        result = Result.ok(1).finally_tee(lambda: Result.fail(FAKE_ERROR))
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+
+        result = Result.fail().finally_tee(lambda: Result.fail(FAKE_ERROR))
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+
+    def test_finally_tee_use_prev_result_fail(self):
+        result = Result.ok(1).finally_tee(lambda prev_result: Result.fail(ErrorDetail(message=f"{prev_result.value}")))
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, error_detail=result.detail, title="An error occurred", message="1", code=500)
+
+        result = Result.fail().finally_tee(lambda prev_result: Result.fail(ErrorDetail(message=f"{prev_result.success}")))
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, error_detail=result.detail, title="An error occurred", message="False", code=500)
+
+    # endregion
+
 
 if __name__ == "__main__":
     unittest.main()

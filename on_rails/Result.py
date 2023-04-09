@@ -435,6 +435,29 @@ class Result(Generic[T]):
         return Result.fail(ValidationError(
             message=f"{func.__name__}() takes {num_of_function_params} arguments. It cannot be executed."))
 
+    def finally_tee(self, func: Callable, num_of_try: int = 1, try_only_on_exceptions: bool = True):
+        """
+        Whether the previous operation was successful or not, this function is executed.
+        If the `func` result is successful, the previous result will be returned.
+        But if it fails, the result of the function will be returned as Result.
+
+        :param func: func is a parameter that expects a callable function as input. This function will be called by the
+        finally_tee method
+        :type func: Callable
+
+        :param num_of_try: The parameter "num_of_try" is an integer that specifies the number of times the function should
+        try to execute the given function "func". If the function execution fails, it will retry the execution for the
+        specified number of times. The default value of this parameter is 1
+        :type num_of_try: int (optional)
+
+        :param try_only_on_exceptions: `try_only_on_exceptions` is a boolean parameter that determines whether the `func`
+        should only be retried if an exception is raised or not.
+        """
+        result = self.__call_func(func, [self], num_of_try, try_only_on_exceptions)
+        if result.success:
+            return self
+        return result
+
     # region private methods
 
     @staticmethod
