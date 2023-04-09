@@ -176,6 +176,37 @@ class Result(Generic[T]):
             return self  # ignore result
         return result
 
+    def on_success_operate_when(self, condition_or_func: Union[Callable, bool], func: Callable,
+                                num_of_try: int = 1, try_only_on_exceptions=True):
+        """
+        This function operates a given function when a specified condition is met and the previous operation was successful.
+
+        :param condition_or_func: The condition or function that needs to be checked before calling the main function. It
+        can be either a boolean value or a callable function that returns a boolean value
+        :type condition_or_func: Union[Callable, bool]
+
+        :param func: `func` is a callable object (function, method, lambda function, etc.) that will be executed if the
+        `condition_or_func` parameter evaluates to `True`.
+        The `self` parameter is passed as the first argument to `func` optionally.
+        :type func: Callable
+
+        :param num_of_try: The `num_of_try` parameter is an optional integer parameter that specifies the number of times to
+        try executing the function `func` if it fails due to an exception. If `num_of_try` is not specified, the function
+        will only be executed once, defaults to 1
+        :type num_of_try: int (optional)
+
+        :param try_only_on_exceptions: `try_only_on_exceptions` is a boolean parameter that determines whether the `func`
+        should only be retried if an exception is raised or not.
+
+        :return: If condition pass, returns result of function as Result object.
+        If condition not pass, returns previous Result object.
+
+        """
+        if not self.success:
+            return self
+        return self.__operate_when(condition_or_func, func, [self.value, self],
+                                   num_of_try, try_only_on_exceptions)
+
     # endregion
 
     # region on_fail
@@ -330,12 +361,19 @@ class Result(Generic[T]):
         :return: If condition pass, returns result of function as Result object.
         If condition not pass, returns previous Result object.
         """
-        result = self.__is_condition_pass(condition_or_func, num_of_try, try_only_on_exceptions)
+        return self.__operate_when(condition_or_func=condition_or_func,
+                                   func=func, optional_args=[self],
+                                   num_of_try=num_of_try, try_only_on_exceptions=try_only_on_exceptions)
+
+    def __operate_when(self, condition_or_func: Union[Callable, bool],
+                       func: Callable, optional_args: List[Any] = None,
+                       num_of_try: int = 1, try_only_on_exceptions=True):
+        result = self.__is_condition_pass(condition_or_func, optional_args, num_of_try, try_only_on_exceptions)
         if not result.success:
             return result
         if not result.value:
             return self
-        return self.__call_func(func, [self], num_of_try, try_only_on_exceptions)
+        return self.__call_func(func, optional_args, num_of_try, try_only_on_exceptions)
 
     def try_func(self, func: Callable, num_of_try: int = 1,
                  ignore_previous_error: bool = False, try_only_on_exceptions: bool = True):
@@ -385,6 +423,7 @@ class Result(Generic[T]):
         if not is_func_valid(func):
             return Result.fail(ValidationError(message="The input function is not valid."))
 
+        optional_args = optional_args if optional_args else []
         num_of_function_params = get_num_of_function_parameters(func)
         if num_of_function_params > len(optional_args):
             return Result.fail(ValidationError(
@@ -394,6 +433,7 @@ class Result(Generic[T]):
         return try_func(lambda: func(*optional_args[:num_of_function_params]), num_of_try, try_only_on_exceptions)
 
     def __is_condition_pass(self, condition_or_func: Union[Callable, bool],
+                            optional_args: List[Any] = None,
                             num_of_try: int = 1, try_only_on_exceptions: bool = True):
         """
         This function checks if a given condition or function is true or false and returns a result accordingly.
@@ -406,7 +446,7 @@ class Result(Generic[T]):
             return Result.fail(ValidationError(message=f"The condition only can be a function or a boolean. "
                                                        f"{type(condition_or_func).__name__} is not acceptable."))
 
-        result = self.__call_func(condition_or_func, [self], num_of_try, try_only_on_exceptions)
+        result = self.__call_func(condition_or_func, optional_args, num_of_try, try_only_on_exceptions)
         if not result.success:
             return result
         if result.value is not None and isinstance(result.value, bool):

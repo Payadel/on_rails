@@ -213,6 +213,21 @@ class TestResult(unittest.TestCase):
 
     # endregion
 
+    # region on_success_operate_when
+
+    def test_on_success_operate_when_previous_failed(self):
+        result = Result.fail().on_success_operate_when(True, lambda: Result.ok(1))
+
+        assert_result(self, result, success=False)
+
+    def test_on_success_operate_when_use_previous_result(self):
+        result = Result.ok(1).on_success_operate_when(lambda value, prev_result: value == prev_result.value,
+                                                      lambda value, prev_result: Result.ok(value + prev_result.value))
+
+        assert_result(self, result, success=True, value=2)
+
+    # endregion
+
     # region on_success_add_more_data
 
     def test_on_success_add_more_data_on_fail_result(self):
