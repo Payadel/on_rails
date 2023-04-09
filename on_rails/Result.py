@@ -18,6 +18,7 @@ class Result(Generic[T]):
         detail (ResultDetail, optional): The details of the result. Defaults to None.
         value (T, optional): The value of the result. Defaults to None.
     """
+
     success: bool
     detail: Optional[ResultDetail] = None
     value: Optional[T] = None
@@ -316,7 +317,7 @@ class Result(Generic[T]):
     # endregion
 
     def on_fail_operate_when(self, condition_or_func: Union[Callable, bool], func: Callable,
-                                num_of_try: int = 1, try_only_on_exceptions=True):
+                             num_of_try: int = 1, try_only_on_exceptions=True):
         """
         This function operates a given function when a specified condition is met and the previous operation was not successful.
 
@@ -393,16 +394,6 @@ class Result(Generic[T]):
         return self.__operate_when(condition_or_func=condition_or_func,
                                    func=func, optional_args=[self],
                                    num_of_try=num_of_try, try_only_on_exceptions=try_only_on_exceptions)
-
-    def __operate_when(self, condition_or_func: Union[Callable, bool],
-                       func: Callable, optional_args: List[Any] = None,
-                       num_of_try: int = 1, try_only_on_exceptions=True):
-        result = self.__is_condition_pass(condition_or_func, optional_args, num_of_try, try_only_on_exceptions)
-        if not result.success:
-            return result
-        if not result.value:
-            return self
-        return self.__call_func(func, optional_args, num_of_try, try_only_on_exceptions)
 
     def try_func(self, func: Callable, num_of_try: int = 1,
                  ignore_previous_error: bool = False, try_only_on_exceptions: bool = True):
@@ -481,6 +472,16 @@ class Result(Generic[T]):
         if result.value is not None and isinstance(result.value, bool):
             return Result.ok(result.value)
         return Result.ok(True)
+
+    def __operate_when(self, condition_or_func: Union[Callable, bool],
+                       func: Callable, optional_args: List[Any] = None,
+                       num_of_try: int = 1, try_only_on_exceptions=True):
+        result = self.__is_condition_pass(condition_or_func, optional_args, num_of_try, try_only_on_exceptions)
+        if not result.success:
+            return result
+        if not result.value:
+            return self
+        return self.__call_func(func, optional_args, num_of_try, try_only_on_exceptions)
 
     # endregion
 
