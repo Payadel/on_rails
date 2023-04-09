@@ -273,11 +273,7 @@ class Result:
         :param ignore_errors: If it is false, it will return the error result when the result of the function fails, otherwise it will be ignored.
         :return: an instance of the class that it belongs to (presumably named `self`).
         """
-        if not is_func_valid(func):
-            return Result.fail(ValidationError(message="The input function is not valid."))
-        if self.success:
-            return self
-        result = try_func(func, num_of_try, try_only_on_exceptions)
+        result = self.on_fail(func, num_of_try, try_only_on_exceptions)
         if result.success or ignore_errors:
             return self  # ignore result
         return result
