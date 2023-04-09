@@ -479,15 +479,17 @@ class TestResult(unittest.TestCase):
 
     def test_try_func_give_none(self):
         result = try_func(None)
-        self.assertFalse(result.success)
-        assert_error_detail(self, error_detail=result.detail, title="An error occurred",
-                            message="The input function can not be None.", code=500)
+
+        assert_result_with_type(test_class=self, result=result, success=False, detail_type=ValidationError)
+        assert_error_detail(self, error_detail=result.detail, title="One or more validation errors occurred",
+                            message="The input function is not valid.", code=400)
 
     def test_try_func_give_func_with_parameters(self):
         result = try_func(lambda x: x)
-        self.assertFalse(result.success)
-        assert_error_detail(self, error_detail=result.detail, title="An error occurred",
-                            message='<lambda>() takes 1 arguments. It cannot be executed.', code=500)
+
+        assert_result_with_type(test_class=self, result=result, success=False, detail_type=ValidationError)
+        assert_error_detail(self, error_detail=result.detail, title="One or more validation errors occurred",
+                            message='<lambda>() takes 1 arguments. It cannot be executed.', code=400)
 
     def test_try_func_give_func_ok(self):
         result = try_func(lambda: Result.ok(5))
@@ -530,9 +532,9 @@ class TestResult(unittest.TestCase):
     def test_try_func_on_result_give_none(self):
         result = Result.ok().try_func(None)
 
-        self.assertFalse(result.success)
-        assert_error_detail(self, error_detail=result.detail, title="An error occurred",
-                            message='The input function can not be None.', code=500)
+        assert_result_with_type(test_class=self, result=result, success=False, detail_type=ValidationError)
+        assert_error_detail(self, error_detail=result.detail, title="One or more validation errors occurred",
+                            message='The input function is not valid.', code=400)
 
     def test_try_func_without_parameters_on_success_result(self):
         result = Result.ok().try_func(lambda: 5)
@@ -565,11 +567,12 @@ class TestResult(unittest.TestCase):
     def test_try_func_without_parameters_on_failed_result(self):
         result = Result.fail().try_func(lambda: 5)
 
-        assert_error_detail(self, error_detail=result.detail, title="An error occurred",
+        assert_result_with_type(test_class=self, result=result, success=False, detail_type=ValidationError)
+        assert_error_detail(self, error_detail=result.detail, title="One or more validation errors occurred",
                             message="The previous function failed. "
                                     "The new function does not have a parameter to get the previous result. "
                                     "Either define a function that accepts a parameter or set skip_previous_error to True.",
-                            code=500)
+                            code=400)
 
     def test_try_func_without_parameters_on_failed_result_with_skip_previous_error(self):
         result = Result.fail().try_func(lambda: 5, ignore_previous_error=True)
@@ -618,9 +621,9 @@ class TestResult(unittest.TestCase):
     def test_try_func_give_invalid_func(self):
         result = Result.ok().try_func(lambda x, y: x)
 
-        self.assertFalse(result.success)
-        assert_error_detail(self, error_detail=result.detail, title="An error occurred",
-                            message='<lambda>() takes 2 arguments. It cannot be executed.', code=500)
+        assert_result_with_type(test_class=self, result=result, success=False, detail_type=ValidationError)
+        assert_error_detail(self, error_detail=result.detail, title="One or more validation errors occurred",
+                            message='<lambda>() takes 2 arguments. It cannot be executed.', code=400)
 
     # endregion
 

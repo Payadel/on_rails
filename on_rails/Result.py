@@ -335,21 +335,21 @@ class Result:
     :return: a `Result` object.
         :return: an instance of the `Result` class, which contains either a successful result or an error message.
         """
-        if func is None:
-            return Result.fail(ErrorDetail(message="The input function can not be None."))
+        if func is None or not callable(func):
+            return Result.fail(ValidationError(message="The input function is not valid."))
 
         num_of_function_params = get_num_of_function_parameters(func)
 
         if num_of_function_params == 0:
             if self.success or ignore_previous_error:
                 return try_func(func, num_of_try=num_of_try, try_only_on_exceptions=try_only_on_exceptions)
-            return Result.fail(ErrorDetail(
+            return Result.fail(ValidationError(
                 message="The previous function failed. "
                         "The new function does not have a parameter to get the previous result. "
                         "Either define a function that accepts a parameter or set skip_previous_error to True."))
         if num_of_function_params == 1:
             return try_func(lambda: func(self), num_of_try=num_of_try, try_only_on_exceptions=try_only_on_exceptions)
-        return Result.fail(ErrorDetail(
+        return Result.fail(ValidationError(
             message=f"{func.__name__}() takes {num_of_function_params} arguments. It cannot be executed."))
 
 
@@ -361,7 +361,7 @@ def try_func(func: callable, num_of_try: int = 1, try_only_on_exceptions: bool =
     :param num_of_try: The number of times the input function will be attempted to execute in case of failure. The default
     value is 1, meaning the function will be executed only once by default, defaults to 1 (optional)
     :return: a `Result` object. The `Result` object can either be a successful result or a failed result with an
-    `ErrorDetail` object containing information about the error.
+    `ValidationError` object containing information about the error.
 
     :param try_only_on_exceptions: A boolean parameter that determines whether the function should only be retried if an
     exception is raised. If set to True, the function will only be retried if an exception is raised. If set to False, the
@@ -369,14 +369,12 @@ def try_func(func: callable, num_of_try: int = 1, try_only_on_exceptions: bool =
     :type try_only_on_exceptions: bool (optional)
     :return: a `Result` object.
     """
-    if func is None:
-        return Result.fail(ErrorDetail(message="The input function can not be None."))
-    if not callable(func):
-        return Result.fail(ErrorDetail(message=f"{func} is not callable."))
+    if func is None or not callable(func):
+        return Result.fail(ValidationError(message="The input function is not valid."))
 
     num_of_function_params = get_num_of_function_parameters(func)
     if num_of_function_params > 0:
-        return Result.fail(ErrorDetail(
+        return Result.fail(ValidationError(
             message=f"{func.__name__}() takes {num_of_function_params} arguments. It cannot be executed."))
 
     errors = []
