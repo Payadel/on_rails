@@ -1,4 +1,4 @@
-from typing import Any, Callable, Generic, Optional, TypeVar
+from typing import Any, Callable, Generic, List, Optional, TypeVar
 
 from on_rails._utility import (await_func, generate_error,
                                get_num_of_function_parameters, is_func_valid)
@@ -118,25 +118,11 @@ class Result(Generic[T]):
 
         :return: The method `on_success` returns either self or the result of given function.
         """
-        return try_func(lambda: self.__on_success(func, num_of_try, try_only_on_exceptions))
-
-    def __on_success(self, func: Callable, num_of_try: int = 1, try_only_on_exceptions=True):
-        if not is_func_valid(func):
-            return Result.fail(ValidationError(message="The input function is not valid."))
-
         if not self.success:
             return self
 
-        num_of_function_params = get_num_of_function_parameters(func)
-        if num_of_function_params == 0:
-            return try_func(func, num_of_try, try_only_on_exceptions)
-        if num_of_function_params == 1:
-            return try_func(lambda: func(self.value), num_of_try, try_only_on_exceptions)
-        if num_of_function_params == 2:
-            return try_func(lambda: func(self.value, self), num_of_try, try_only_on_exceptions)
-        return Result.fail(ValidationError(
-            message=f"{func.__name__}() takes {num_of_function_params} arguments. It cannot be executed. "
-                    "maximum of two parameters is acceptable."))
+        return self.__call_func(func, optional_args=[self.value, self],
+                                num_of_try=num_of_try, try_only_on_exceptions=try_only_on_exceptions)
 
     def on_success_add_more_data(self, more_data: object):
         """
@@ -185,7 +171,7 @@ class Result(Generic[T]):
         :param ignore_errors: If it is false, it will return the error result when the result of the function fails, otherwise it will be ignored.
         :type ignore_errors: bool (optional)
         """
-        result = self.__on_success(func, num_of_try, try_only_on_exceptions)
+        result = self.on_success(func, num_of_try, try_only_on_exceptions)
         if result.success or ignore_errors:
             return self  # ignore result
         return result
@@ -358,6 +344,24 @@ class Result(Generic[T]):
             return try_func(lambda: func(self), num_of_try=num_of_try, try_only_on_exceptions=try_only_on_exceptions)
         return Result.fail(ValidationError(
             message=f"{func.__name__}() takes {num_of_function_params} arguments. It cannot be executed."))
+
+    # region private methods
+
+    @staticmethod
+    def __call_func(func: callable, optional_args: List[Any] = None,
+                    num_of_try: int = 1, try_only_on_exceptions: bool = False):
+        if not is_func_valid(func):
+            return Result.fail(ValidationError(message="The input function is not valid."))
+
+        num_of_function_params = get_num_of_function_parameters(func)
+        if num_of_function_params > len(optional_args):
+            return Result.fail(ValidationError(
+                message=f"{func.__name__}() takes {num_of_function_params} arguments. It cannot be executed. "
+                        f"maximum of {len(optional_args)} parameters is acceptable."))
+
+        return try_func(lambda: func(*optional_args[:num_of_function_params]), num_of_try, try_only_on_exceptions)
+
+    # endregion
 
 
 def try_func(func: Callable, num_of_try: int = 1, try_only_on_exceptions: bool = True) -> Result:
