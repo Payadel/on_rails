@@ -127,8 +127,8 @@ def get_number() -> Result:
     return Result.ok(number)
 
 
-get_number()\
-    .on_success(lambda prev: print(f"Number is valid: {prev.value}"))\
+get_number()
+    .on_success(lambda value: print(f"Number is valid: {value}"))
     .on_fail(lambda prev: print(prev.detail))
 ```
 
@@ -242,7 +242,7 @@ def fake_operation():
     return Result.ok()
 
 
-fake_operation().on_success(create_data, num_of_try=5)
+fake_operation().on_success(lambda: create_data(url, data), num_of_try=5)
 
 ```
 
