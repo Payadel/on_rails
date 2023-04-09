@@ -1,4 +1,4 @@
-from typing import Any, Generic, Optional, TypeVar
+from typing import Any, Callable, Generic, Optional, TypeVar
 
 from on_rails._utility import (await_func, generate_error,
                                get_num_of_function_parameters, is_func_valid)
@@ -102,7 +102,7 @@ class Result(Generic[T]):
 
     # region on_success
 
-    def on_success(self, func: callable, num_of_try: int = 1, try_only_on_exceptions=True):
+    def on_success(self, func: Callable, num_of_try: int = 1, try_only_on_exceptions=True):
         """
         This function executes a given function only if the previous attempts were successful.
 
@@ -120,7 +120,7 @@ class Result(Generic[T]):
         """
         return try_func(lambda: self.__on_success(func, num_of_try, try_only_on_exceptions))
 
-    def __on_success(self, func: callable, num_of_try: int = 1, try_only_on_exceptions=True):
+    def __on_success(self, func: Callable, num_of_try: int = 1, try_only_on_exceptions=True):
         if not is_func_valid(func):
             return Result.fail(ValidationError(message="The input function is not valid."))
 
@@ -167,14 +167,14 @@ class Result(Generic[T]):
         self.detail = new_detail
         return self
 
-    def on_success_tee(self, func: callable, num_of_try: int = 1, try_only_on_exceptions=True,
+    def on_success_tee(self, func: Callable, num_of_try: int = 1, try_only_on_exceptions=True,
                        ignore_errors: bool = False):
         """
         This function executes a given function and returns the previous result if successful, or the result of the given
         function if it fails.
 
         :param func: The function that will be executed
-        :type func: callable
+        :type func: Callable
 
         :param num_of_try: The number of times the function should be attempted if it fails, defaults to 1
         :type num_of_try: int (optional)
@@ -194,7 +194,7 @@ class Result(Generic[T]):
 
     # region on_fail
 
-    def on_fail(self, func: callable, num_of_try: int = 1, try_only_on_exceptions=True):
+    def on_fail(self, func: Callable, num_of_try: int = 1, try_only_on_exceptions=True):
         """
         If the result is not successful, call the function with the given arguments
 
@@ -256,15 +256,15 @@ class Result(Generic[T]):
         self.detail = new_detail
         return self
 
-    def on_fail_tee(self, func: callable, num_of_try: int = 1, try_only_on_exceptions=True,
+    def on_fail_tee(self, func: Callable, num_of_try: int = 1, try_only_on_exceptions=True,
                     ignore_errors: bool = False):
         """
         This function executes a given function only if the previous operation was not successful and returns the original
         object. the function result will be ignored.
 
-        :param func: func is a callable object, which means it is a function or a method that can be called. It is the
+        :param func: func is a Callable object, which means it is a function or a method that can be called. It is the
         function that will be executed if the previous operation was not successful
-        :type func: callable
+        :type func: Callable
         :param num_of_try: The parameter `num_of_try` is an integer that specifies the number of times the `func` should be
         tried in case of failure. If `num_of_try` is not specified, it defaults to 1
         :type num_of_try: int (optional)
@@ -319,7 +319,7 @@ class Result(Generic[T]):
             error_detail.add_more_data({"prev_detail": self.detail})
         return Result.fail(error_detail)
 
-    def try_func(self, func: callable, num_of_try: int = 1,
+    def try_func(self, func: Callable, num_of_try: int = 1,
                  ignore_previous_error: bool = False, try_only_on_exceptions: bool = True):
         """
         The function `try_func` attempts to execute a given function with a specified number of tries and handles errors.
@@ -360,7 +360,7 @@ class Result(Generic[T]):
             message=f"{func.__name__}() takes {num_of_function_params} arguments. It cannot be executed."))
 
 
-def try_func(func: callable, num_of_try: int = 1, try_only_on_exceptions: bool = True) -> Result:
+def try_func(func: Callable, num_of_try: int = 1, try_only_on_exceptions: bool = True) -> Result:
     """
     The function `try_func` attempts to execute a given function with a specified number of tries and handles errors.
 
