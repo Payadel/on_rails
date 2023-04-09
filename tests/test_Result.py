@@ -26,6 +26,19 @@ async def async_function():
 
 
 class TestResult(unittest.TestCase):
+    # region Generic
+
+    def test_generic(self):
+        # Simple
+        result = Result.ok(1)
+        assert_result(self, result, success=True, value=1)
+
+        # Generic
+        result = Result[int].ok(1)
+        assert_result(self, result, success=True, value=1)
+
+    # endregion
+
     # region __init__
 
     def test_init_without_optional_args(self):

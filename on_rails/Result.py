@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Generic, Optional, TypeVar
 
 from on_rails._utility import (await_func, generate_error,
                                get_num_of_function_parameters, is_func_valid)
@@ -7,20 +7,22 @@ from on_rails.ResultDetails.ErrorDetail import ErrorDetail
 from on_rails.ResultDetails.Errors.ValidationError import ValidationError
 from on_rails.ResultDetails.SuccessDetail import SuccessDetail
 
+T = TypeVar('T')
 
-class Result:
+
+class Result(Generic[T]):
     """ Stores the result of a function.
 
     Attributes:
         success (bool): A flag indicating whether the result was successful.
         detail (ResultDetail, optional): The details of the result. Defaults to None.
-        value (Any, optional): The value of the result. Defaults to None.
+        value (T, optional): The value of the result. Defaults to None.
     """
     success: bool
     detail: Optional[ResultDetail] = None
-    value: Optional[Any] = None
+    value: Optional[T] = None
 
-    def __init__(self, success: bool, detail: Optional[ResultDetail] = None, value: Optional[Any] = None):
+    def __init__(self, success: bool, detail: Optional[ResultDetail] = None, value: Optional[T] = None):
         self.success = success
         self.detail = detail
         self.value = value
@@ -36,12 +38,12 @@ class Result:
     # region Static Methods
 
     @staticmethod
-    def ok(value: Optional[Any] = None, detail: Optional[ResultDetail] = None):
+    def ok(value: Optional[T] = None, detail: Optional[ResultDetail] = None):
         """
         Returns a successful result.
 
         :param value: The value to return if the result is ok
-        :type value: Optional[Any]
+        :type value: Optional[T]
         :param detail: Optional[ResultDetail] = None
         :type detail: Optional[ResultDetail]
         :return: A successful Result with the value. The detail and value are optional.
