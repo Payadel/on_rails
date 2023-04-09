@@ -116,11 +116,12 @@ class Result:
 
         :return: The method `on_success` returns either self or the result of given function.
         """
-        if func is None or not callable(func):
-            return Result.fail(ValidationError(message="The input function is not valid."))
         return try_func(lambda: self.__on_success(func, num_of_try, try_only_on_exceptions))
 
     def __on_success(self, func: callable, num_of_try: int = 1, try_only_on_exceptions=True):
+        if func is None or not callable(func):
+            return Result.fail(ValidationError(message="The input function is not valid."))
+
         if not self.success:
             return self
 
