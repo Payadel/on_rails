@@ -63,13 +63,13 @@ class Result(Generic[T]):
         return Result(False, detail)
 
     @staticmethod
-    def convert_to_result(output: Any, none_means_success: bool = True):
+    def convert_to_result(value: Any, none_means_success: bool = True):
         """
         The function converts a given output to a Result object, where None can indicate success or failure depending on the
         value of a boolean parameter.
 
-        :param output: The output parameter is of type Any, which means it can be any Python object
-        :type output: Any
+        :param value: The output parameter is of type Any, which means it can be any Python object
+        :type value: Any
         :param none_means_success: A boolean parameter that determines whether a `None` output should be considered a
         success or a failure. If `none_means_success` is `True`, then a `None` output will be considered a success and the
         function will return a `Result.ok()` instance. If `none_means_success` is, defaults to True
@@ -78,11 +78,11 @@ class Result(Generic[T]):
         a `Result` object with a success status if `none_means_success` is `True`, otherwise it returns a `Result` object
         with a failure status. If the `output` parameter is already a `Result` object, it returns it as is. Otherwise,
         """
-        if output is None:
+        if value is None:
             return Result.ok() if none_means_success else Result.fail()
-        if isinstance(output, Result):
-            return output
-        return Result.ok(output)
+        if isinstance(value, Result):
+            return value
+        return Result.ok(value)
 
     # endregion
 
@@ -125,12 +125,12 @@ class Result(Generic[T]):
         return self.__call_func(func, optional_args=[self.value, self],
                                 num_of_try=num_of_try, try_only_on_exceptions=try_only_on_exceptions)
 
-    def on_success_add_more_data(self, more_data: object):
+    def on_success_add_more_data(self, more_data: Any):
         """
         This function adds more data to the success detail if the current result is successful.
 
         :param more_data: more_data is an object that contains additional data to be added to the success response
-        :type more_data: object
+        :type more_data: Any
         :return: either `ok` or `fail` result, depending on the success of adding more data to the `SuccessDetail` object.
         """
         if not self.success or not more_data:
@@ -235,13 +235,13 @@ class Result(Generic[T]):
         return self.try_func(func, num_of_try, ignore_previous_error=True,
                              try_only_on_exceptions=try_only_on_exceptions)
 
-    def on_fail_add_more_data(self, more_data: object, ignore_error: bool = False):
+    def on_fail_add_more_data(self, more_data: Any, ignore_error: bool = False):
         """
-        This function adds more data to an error detail object and returns the object
+        This function adds more data to an error detail object and returns the Result object.
 
         :param more_data: The parameter `more_data` is an object that contains additional data to be added to the error
         detail.
-        :type more_data: object
+        :type more_data: Any
         :param ignore_error: `ignore_error` is a boolean parameter that determines whether or not to ignore any errors that
         occur while adding more data to the `ErrorDetail` object. If `ignore_error` is set to `True`, any errors that occur
         will be ignored and the function will continue to execute.
