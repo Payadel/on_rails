@@ -200,7 +200,6 @@ class Result(Generic[T]):
 
         :return: If condition pass, returns result of function as Result object.
         If condition not pass, returns previous Result object.
-
         """
         if not self.success:
             return self
@@ -315,6 +314,36 @@ class Result(Generic[T]):
         raise Exception(str(detail))
 
     # endregion
+
+    def on_fail_operate_when(self, condition_or_func: Union[Callable, bool], func: Callable,
+                                num_of_try: int = 1, try_only_on_exceptions=True):
+        """
+        This function operates a given function when a specified condition is met and the previous operation was not successful.
+
+        :param condition_or_func: The condition or function that needs to be checked before calling the main function. It
+        can be either a boolean value or a callable function that returns a boolean value
+        :type condition_or_func: Union[Callable, bool]
+
+        :param func: `func` is a callable object (function, method, lambda function, etc.) that will be executed if the
+        `condition_or_func` parameter evaluates to `True`.
+        The `self` parameter is passed as the first argument to `func` optionally.
+        :type func: Callable
+
+        :param num_of_try: The `num_of_try` parameter is an optional integer parameter that specifies the number of times to
+        try executing the function `func` if it fails due to an exception. If `num_of_try` is not specified, the function
+        will only be executed once, defaults to 1
+        :type num_of_try: int (optional)
+
+        :param try_only_on_exceptions: `try_only_on_exceptions` is a boolean parameter that determines whether the `func`
+        should only be retried if an exception is raised or not.
+
+        :return: If condition pass, returns result of function as Result object.
+        If condition not pass, returns previous Result object.
+        """
+        if self.success:
+            return self
+        return self.__operate_when(condition_or_func, func, [self],
+                                   num_of_try, try_only_on_exceptions)
 
     def fail_when(self, condition: bool, error_detail: Optional[ErrorDetail] = None, add_prev_detail: bool = False):
         """
