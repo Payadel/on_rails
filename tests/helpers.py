@@ -7,6 +7,7 @@ from on_rails import ExceptionError
 from on_rails.Result import Result
 from on_rails.ResultDetail import ResultDetail
 from on_rails.ResultDetails.ErrorDetail import ErrorDetail
+from on_rails.ResultDetails.Errors.ValidationError import ValidationError
 
 
 def assert_result(test_class: unittest.TestCase, result: Result, success: bool,
@@ -56,3 +57,10 @@ def assert_exception(test_class: unittest.TestCase, result: Result, exception_ty
     test_class.assertTrue(isinstance(detail, ExceptionError))
     if exception_type:
         test_class.assertTrue(isinstance(detail.exception, exception_type))
+
+
+def assert_invalid_func(test_class: unittest.TestCase, result: Result):
+    assert_result_with_type(test_class=test_class, result=result, success=False, detail_type=ValidationError)
+    assert_error_detail(test_class=test_class, error_detail=result.detail,
+                        title='One or more validation errors occurred',
+                        message="The input function is not valid.", code=400)

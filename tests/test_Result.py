@@ -9,8 +9,8 @@ from on_rails.ResultDetail import ResultDetail
 from on_rails.ResultDetails import SuccessDetail
 from on_rails.ResultDetails.Errors import BadRequestError
 from on_rails.ResultDetails.Errors.ValidationError import ValidationError
-from tests.helpers import (assert_error_detail, assert_result,
-                           assert_result_with_type)
+from tests.helpers import (assert_error_detail, assert_invalid_func,
+                           assert_result, assert_result_with_type)
 
 FAKE_EXCEPTION = Exception("fake")
 FAKE_ERROR = ErrorDetail("fake")
@@ -274,15 +274,11 @@ class TestResult(unittest.TestCase):
     def test_on_success_tee_give_invalid_func(self):
         # None
         result = Result.ok(1).on_success_tee(None)
-        assert_result_with_type(test_class=self, result=result, success=False, detail_type=ValidationError)
-        assert_error_detail(test_class=self, error_detail=result.detail, title='One or more validation errors occurred',
-                            message="The input function is not valid.", code=400)
+        assert_invalid_func(self, result)
 
         # Not callable
         result = Result.ok(1).on_success_tee("Not callable")
-        assert_result_with_type(test_class=self, result=result, success=False, detail_type=ValidationError)
-        assert_error_detail(test_class=self, error_detail=result.detail, title='One or more validation errors occurred',
-                            message="The input function is not valid.", code=400)
+        assert_invalid_func(self, result)
 
     def test_on_success_tee_on_fail_result(self):
         result = Result.fail().on_success_tee(lambda: 5)
@@ -321,7 +317,7 @@ class TestResult(unittest.TestCase):
         assert_result_with_type(self, result, success=False, detail_type=ValidationError)
         assert_error_detail(test_class=self, error_detail=result.detail, title='One or more validation errors occurred',
                             message="<lambda>() takes 3 arguments. It cannot be executed. "
-                                    "maximum of two parameters is acceptable.", code=400)
+                                    "maximum of 2 parameters is acceptable.", code=400)
 
     # endregion
 
@@ -330,15 +326,11 @@ class TestResult(unittest.TestCase):
     def test_on_fail_give_invalid_func(self):
         # None
         result = Result.fail().on_fail(None)
-        assert_result_with_type(test_class=self, result=result, success=False, detail_type=ValidationError)
-        assert_error_detail(test_class=self, error_detail=result.detail, title='One or more validation errors occurred',
-                            message="The input function is not valid.", code=400)
+        assert_invalid_func(self, result)
 
         # Not callable
         result = Result.fail().on_fail("not callable")
-        assert_result_with_type(test_class=self, result=result, success=False, detail_type=ValidationError)
-        assert_error_detail(test_class=self, error_detail=result.detail, title='One or more validation errors occurred',
-                            message="The input function is not valid.", code=400)
+        assert_invalid_func(self, result)
 
     def test_on_fail_with_success_result(self):
         success_result = Result.ok(5)
@@ -421,17 +413,11 @@ class TestResult(unittest.TestCase):
     def test_on_fail_tee_give_invalid_func(self):
         # None
         result = Result.fail().on_fail_tee(None)
-
-        assert_result_with_type(test_class=self, result=result, success=False, detail_type=ValidationError)
-        assert_error_detail(test_class=self, error_detail=result.detail, title='One or more validation errors occurred',
-                            message="The input function is not valid.", code=400)
+        assert_invalid_func(self, result)
 
         # Not callable
         result = Result.fail().on_fail_tee("string")
-
-        assert_result_with_type(test_class=self, result=result, success=False, detail_type=ValidationError)
-        assert_error_detail(test_class=self, error_detail=result.detail, title='One or more validation errors occurred',
-                            message="The input function is not valid.", code=400)
+        assert_invalid_func(self, result)
 
     def test_on_fail_tee_success_func(self):
         result = Result.fail().on_fail_tee(lambda: Result.ok())
