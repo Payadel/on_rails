@@ -227,6 +227,36 @@ class TestResult(unittest.TestCase):
 
         assert_result(self, result, success=True, value=2)
 
+    def test_on_success_operate_when_break_rails_with_condition_false(self):
+        result = Result.ok(1).on_success_operate_when(False, lambda: 5, break_rails=True)
+        assert_result(self, result, success=True, value=1)
+
+    def test_on_success_operate_when_break_rails_with_condition_true(self):
+        try:
+            Result.ok(1).on_success_operate_when(True, lambda: 5, break_rails=True)
+            self.assertTrue(False)  # should not reach here
+        except BreakRails as e:
+            assert_result(self, e.result, success=True, value=5)
+
+    def test_on_success_operate_when_break_rails_give_func_fail(self):
+        try:
+            Result.ok(1).on_success_operate_when(True, lambda: Result.fail(), break_rails=True)
+            self.assertTrue(False)  # should not reach here
+        except BreakRails as e:
+            assert_result(self, e.result, success=False)
+
+    def test_on_success_operate_when_break_rails_give_func_raise_exception(self):
+        try:
+            Result.ok(1).on_success_operate_when(True, function_raise_exception, break_rails=True)
+            self.assertTrue(False)  # should not reach here
+        except BreakRails as e:
+            assert_result_with_type(self, e.result, success=False, detail_type=ErrorDetail)
+            assert_error_detail(self, e.result.detail, title='An error occurred',
+                                message="Operation failed with 1 attempts. The details of the 1 errors are stored in "
+                                        "the more_data field. At least one of the errors was an exception type, the "
+                                        "first exception being stored in the exception field.",
+                                exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION], code=500)
+
     # endregion
 
     # region on_success_add_more_data
@@ -411,7 +441,8 @@ class TestResult(unittest.TestCase):
         assert_error_detail(self, result.detail, title="An error occurred",
                             message="Operation failed with 1 attempts. The details of the 1 errors are stored in the "
                                     "more_data field. At least one of the errors was an exception type, the first "
-                                    "exception being stored in the exception field.", code=500, exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION])
+                                    "exception being stored in the exception field.", code=500,
+                            exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION])
 
     def test_on_success_break_with_condition_true(self):
         self.assertRaises(BreakRails, lambda: Result.ok(1).on_success_break(True))
@@ -420,7 +451,8 @@ class TestResult(unittest.TestCase):
 
     def test_on_success_break_use_prev_results(self):
         self.assertRaises(BreakRails, lambda: Result.ok(1).on_success_break(lambda value: value == 1))
-        self.assertRaises(BreakRails, lambda: Result.ok(1).on_success_break(lambda value, prev_result: value == prev_result.value))
+        self.assertRaises(BreakRails,
+                          lambda: Result.ok(1).on_success_break(lambda value, prev_result: value == prev_result.value))
 
     # endregion
 
@@ -487,6 +519,36 @@ class TestResult(unittest.TestCase):
                                                     lambda prev_result: Result.ok(prev_result.success))
 
         assert_result(self, result, success=True, value=False)
+
+    def test_on_fail_operate_when_break_rails_with_condition_false(self):
+        result = Result.fail().on_fail_operate_when(False, lambda: 5, break_rails=True)
+        assert_result(self, result, success=False)
+
+    def test_on_fail_operate_when_break_rails_with_condition_true(self):
+        try:
+            Result.fail().on_fail_operate_when(True, lambda: 5, break_rails=True)
+            self.assertTrue(False)  # should not reach here
+        except BreakRails as e:
+            assert_result(self, e.result, success=True, value=5)
+
+    def test_on_fail_operate_when_break_rails_give_func_fail(self):
+        try:
+            Result.fail().on_fail_operate_when(True, lambda: Result.fail(FAKE_ERROR), break_rails=True)
+            self.assertTrue(False)  # should not reach here
+        except BreakRails as e:
+            assert_result_with_type(self, e.result, success=False, detail_type=ErrorDetail)
+
+    def test_on_fail_operate_when_break_rails_give_func_raise_exception(self):
+        try:
+            Result.fail().on_fail_operate_when(True, function_raise_exception, break_rails=True)
+            self.assertTrue(False)  # should not reach here
+        except BreakRails as e:
+            assert_result_with_type(self, e.result, success=False, detail_type=ErrorDetail)
+            assert_error_detail(self, e.result.detail, title='An error occurred',
+                                message="Operation failed with 1 attempts. The details of the 1 errors are stored in "
+                                        "the more_data field. At least one of the errors was an exception type, the "
+                                        "first exception being stored in the exception field.",
+                                exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION], code=500)
 
     # endregion
 
@@ -642,7 +704,8 @@ class TestResult(unittest.TestCase):
         assert_error_detail(self, result.detail, title="An error occurred",
                             message="Operation failed with 1 attempts. The details of the 1 errors are stored in the "
                                     "more_data field. At least one of the errors was an exception type, the first "
-                                    "exception being stored in the exception field.", code=500, exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION])
+                                    "exception being stored in the exception field.", code=500,
+                            exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION])
 
     def test_on_fail_break_with_condition_true(self):
         self.assertRaises(BreakRails, lambda: Result.fail().on_fail_break(True))
@@ -911,6 +974,36 @@ class TestResult(unittest.TestCase):
         assert_error_detail(self, error_detail=result.detail, title="One or more validation errors occurred",
                             message='The condition only can be a function or a boolean. '
                                     'str is not acceptable.', code=400)
+
+    def test_operate_when_break_rails_with_condition_false(self):
+        result = Result.fail().operate_when(False, lambda: 5, break_rails=True)
+        assert_result(self, result, success=False)
+
+    def test_operate_when_break_rails_with_condition_true(self):
+        try:
+            Result.fail().operate_when(True, lambda: 5, break_rails=True)
+            self.assertTrue(False)  # should not reach here
+        except BreakRails as e:
+            assert_result(self, e.result, success=True, value=5)
+
+    def test_operate_when_break_rails_give_func_fail(self):
+        try:
+            Result.fail().operate_when(True, lambda: Result.fail(FAKE_ERROR), break_rails=True)
+            self.assertTrue(False)  # should not reach here
+        except BreakRails as e:
+            assert_result_with_type(self, e.result, success=False, detail_type=ErrorDetail)
+
+    def test_operate_when_break_rails_give_func_raise_exception(self):
+        try:
+            Result.fail().operate_when(True, function_raise_exception, break_rails=True)
+            self.assertTrue(False)  # should not reach here
+        except BreakRails as e:
+            assert_result_with_type(self, e.result, success=False, detail_type=ErrorDetail)
+            assert_error_detail(self, e.result.detail, title='An error occurred',
+                                message="Operation failed with 1 attempts. The details of the 1 errors are stored in "
+                                        "the more_data field. At least one of the errors was an exception type, the "
+                                        "first exception being stored in the exception field.",
+                                exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION], code=500)
 
     # endregion
 

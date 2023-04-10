@@ -196,7 +196,7 @@ class Result(Generic[T]):
         return result
 
     def on_success_operate_when(self, condition_or_func: Union[Callable, bool], func: Callable,
-                                num_of_try: int = 1, try_only_on_exceptions=True):
+                                num_of_try: int = 1, try_only_on_exceptions=True, break_rails: bool = False):
         """
         This function operates a given function when a specified condition is met and the previous operation was successful.
 
@@ -217,13 +217,16 @@ class Result(Generic[T]):
         :param try_only_on_exceptions: `try_only_on_exceptions` is a boolean parameter that determines whether the `func`
         should only be retried if an exception is raised or not.
 
+        :param break_rails: If `condition_or_func` is passed, break the chain of functions or not? Defaults to `False`
+        :type break_rails: bool (optional)
+
         :return: If condition pass, returns result of function as Result object.
         If condition not pass, returns previous Result object.
         """
         if not self.success:
             return self
         return self.__operate_when(condition_or_func, func, [self.value, self],
-                                   num_of_try, try_only_on_exceptions)
+                                   num_of_try, try_only_on_exceptions, break_rails)
 
     def on_success_break(self, condition_or_func: Union[Callable, bool]):
         """
@@ -371,7 +374,7 @@ class Result(Generic[T]):
         raise Exception(str(detail))
 
     def on_fail_operate_when(self, condition_or_func: Union[Callable, bool], func: Callable,
-                             num_of_try: int = 1, try_only_on_exceptions=True):
+                             num_of_try: int = 1, try_only_on_exceptions=True, break_rails: bool = False):
         """
         This function operates a given function when a specified condition is met and the previous operation was not successful.
 
@@ -392,13 +395,17 @@ class Result(Generic[T]):
         :param try_only_on_exceptions: `try_only_on_exceptions` is a boolean parameter that determines whether the `func`
         should only be retried if an exception is raised or not.
 
+        :param break_rails: If `condition_or_func` is passed, break the chain of functions or not? Defaults to `False`
+        :type break_rails: bool (optional)
+
         :return: If condition pass, returns result of function as Result object.
         If condition not pass, returns previous Result object.
         """
+
         if self.success:
             return self
         return self.__operate_when(condition_or_func, func, [self],
-                                   num_of_try, try_only_on_exceptions)
+                                   num_of_try, try_only_on_exceptions, break_rails)
 
     def on_fail_break(self, condition_or_func: Union[Callable, bool]):
         """
@@ -442,7 +449,7 @@ class Result(Generic[T]):
         return Result.fail(error_detail)
 
     def operate_when(self, condition_or_func: Union[Callable, bool], func: Callable,
-                     num_of_try: int = 1, try_only_on_exceptions=True):
+                     num_of_try: int = 1, try_only_on_exceptions=True, break_rails: bool = False):
         """
         This function takes a condition or function, and if it passes, it calls another function
 
@@ -463,12 +470,17 @@ class Result(Generic[T]):
         :param try_only_on_exceptions: `try_only_on_exceptions` is a boolean parameter that determines whether the `func`
         should only be retried if an exception is raised or not.
 
+        :param break_rails: If `condition_or_func` is passed, break the chain of functions or not? Defaults to `False`
+        :type break_rails: bool (optional)
+
         :return: If condition pass, returns result of function as Result object.
         If condition not pass, returns previous Result object.
         """
+
         return self.__operate_when(condition_or_func=condition_or_func,
                                    func=func, optional_args=[self],
-                                   num_of_try=num_of_try, try_only_on_exceptions=try_only_on_exceptions)
+                                   num_of_try=num_of_try, try_only_on_exceptions=try_only_on_exceptions,
+                                   break_rails=break_rails)
 
     def try_func(self, func: Callable, num_of_try: int = 1,
                  ignore_previous_error: bool = False, try_only_on_exceptions: bool = True):
@@ -600,13 +612,14 @@ class Result(Generic[T]):
 
     def __operate_when(self, condition_or_func: Union[Callable, bool],
                        func: Callable, optional_args: List[Any] = None,
-                       num_of_try: int = 1, try_only_on_exceptions=True):
+                       num_of_try: int = 1, try_only_on_exceptions=True, break_rails: bool = False):
         result = self.__is_condition_pass(condition_or_func, optional_args, num_of_try, try_only_on_exceptions)
         if not result.success:
-            return result
-        if not result.value:
+            return result  # Return error result
+        if not result.value:  # The condition is not true
             return self
-        return self.__call_func(func, optional_args, num_of_try, try_only_on_exceptions)
+        return self.__call_func(func, optional_args, num_of_try, try_only_on_exceptions) \
+            .break_rails(break_rails)
 
     def __break_rails(self):
         raise BreakRails(result=self)
