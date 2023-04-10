@@ -1,5 +1,6 @@
 import asyncio
 import inspect
+from asyncio import AbstractEventLoop
 from typing import Any, Coroutine, List
 
 from on_rails.ResultDetails.ErrorDetail import ErrorDetail
@@ -40,7 +41,7 @@ def await_func(func: callable):
     """
     result = func()
     if isinstance(result, Coroutine):
-        return asyncio.get_event_loop().run_until_complete(result)
+        return get_loop().run_until_complete(result)
     return result
 
 
@@ -82,3 +83,23 @@ def is_func_valid(func):
     is callable (i.e. can be called as a function), and `False` otherwise.
     """
     return func is not None and callable(func)
+
+
+def get_loop() -> AbstractEventLoop:
+    """
+    This function returns the current event loop or creates a new one if none exists in the current thread.
+
+    :return: Returns an instance of the `AbstractEventLoop` class, which is the event loop used by
+    asyncio for scheduling and executing coroutines and callbacks. If there is already an event loop running in the current
+    thread, it returns that event loop. Otherwise, it creates a new event loop, sets it as the current event loop for the
+    thread, and returns it.
+    """
+
+    try:
+        return asyncio.get_event_loop()
+    except RuntimeError as e:
+        if str(e).startswith('There is no current event loop in thread'):
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            return loop
+        raise  # pragma: no cover
