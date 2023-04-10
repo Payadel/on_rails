@@ -34,7 +34,7 @@ def assert_result_detail(test_class: unittest.TestCase, result_detail: ResultDet
     test_class.assertEqual(code, result_detail.code, msg="code")
 
     test_class.assertIsNotNone(result_detail.more_data, msg="more data")  # It should never be None.
-    test_class.assertEqual(result_detail.more_data, more_data, msg="more data")
+    test_class.assertEqual(more_data, result_detail.more_data, msg="more data")
 
 
 def assert_error_detail(test_class: unittest.TestCase, error_detail: ErrorDetail, title: str,
