@@ -3,13 +3,15 @@
 import asyncio
 import unittest
 
-from on_rails import ErrorDetail
-from on_rails.Result import Result, try_func
+from on_rails.Result import BreakRailsException, Result, try_func
 from on_rails.ResultDetail import ResultDetail
-from on_rails.ResultDetails import SuccessDetail
-from on_rails.ResultDetails.Errors import BadRequestError
-from tests.helpers import (assert_error_detail, assert_result,
-                           assert_result_with_type)
+from on_rails.ResultDetails.ErrorDetail import ErrorDetail
+from on_rails.ResultDetails.Errors.BadRequestError import BadRequestError
+from on_rails.ResultDetails.Errors.ValidationError import ValidationError
+from on_rails.ResultDetails.SuccessDetail import SuccessDetail
+from tests.helpers import (assert_error_detail, assert_exception,
+                           assert_invalid_func, assert_result,
+                           assert_result_detail, assert_result_with_type)
 
 FAKE_EXCEPTION = Exception("fake")
 FAKE_ERROR = ErrorDetail("fake")
@@ -25,6 +27,19 @@ async def async_function():
 
 
 class TestResult(unittest.TestCase):
+    # region Generic
+
+    def test_generic(self):
+        # Simple
+        result = Result.ok(1)
+        assert_result(self, result, success=True, value=1)
+
+        # Generic
+        result = Result[int].ok(1)
+        assert_result(self, result, success=True, value=1)
+
+    # endregion
+
     # region __init__
 
     def test_init_without_optional_args(self):
@@ -136,6 +151,14 @@ class TestResult(unittest.TestCase):
 
     # region on_success
 
+    def test_on_success_give_none(self):
+        func_result = Result.ok().on_success(func=None)
+
+        assert_result_with_type(test_class=self, result=func_result, success=False, detail_type=ValidationError)
+        assert_error_detail(test_class=self, error_detail=func_result.detail,
+                            title="One or more validation errors occurred",
+                            message="The input function is not valid.", code=400)
+
     def test_on_success_with_fail_result(self):
         fail_result = Result.fail()
 
@@ -157,12 +180,15 @@ class TestResult(unittest.TestCase):
 
         assert_result(self, func_result, success=True)
 
-    def test_on_success_use_prev_result(self):
-        result = Result.ok(1)
+    def test_on_success_use_prev_value(self):
+        func_result = Result.ok(1).on_success(lambda value: value + 1)
 
-        func_result = result.on_success(lambda prev: prev)
+        assert_result(self, func_result, success=True, value=2)
 
-        self.assertEqual(result, func_result)
+    def test_on_success_use_prev_values(self):
+        func_result = Result.ok(1).on_success(lambda value, result: value + result.value)
+
+        assert_result(self, func_result, success=True, value=2)
 
     def test_on_success_give_func_fail(self):
         success_result = Result.ok(1)
@@ -170,6 +196,11 @@ class TestResult(unittest.TestCase):
         func_result = success_result.on_success(lambda: Result.fail())
 
         assert_result(self, func_result, success=False)
+
+    def test_on_success_give_too_many_args(self):
+        func_result = Result.ok(1).on_success(lambda a, b, c: Result.ok())
+
+        assert_result_with_type(self, func_result, success=False, detail_type=ValidationError)
 
     def test_on_success_give_func_raise_exception(self):
         success_result = Result.ok(1)
@@ -180,6 +211,51 @@ class TestResult(unittest.TestCase):
         assert_error_detail(self, func_result.detail, title='An error occurred',
                             message="Operation failed with 2 attempts. The details of the 2 errors are stored in the more_data field. At least one of the errors was an exception type, the first exception being stored in the exception field.",
                             exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION], code=500)
+
+    # endregion
+
+    # region on_success_operate_when
+
+    def test_on_success_operate_when_previous_failed(self):
+        result = Result.fail().on_success_operate_when(True, lambda: Result.ok(1))
+
+        assert_result(self, result, success=False)
+
+    def test_on_success_operate_when_use_previous_result(self):
+        result = Result.ok(1).on_success_operate_when(lambda value, prev_result: value == prev_result.value,
+                                                      lambda value, prev_result: Result.ok(value + prev_result.value))
+
+        assert_result(self, result, success=True, value=2)
+
+    def test_on_success_operate_when_break_rails_with_condition_false(self):
+        result = Result.ok(1).on_success_operate_when(False, lambda: 5, break_rails=True)
+        assert_result(self, result, success=True, value=1)
+
+    def test_on_success_operate_when_break_rails_with_condition_true(self):
+        try:
+            Result.ok(1).on_success_operate_when(True, lambda: 5, break_rails=True)
+            self.assertTrue(False)  # should not reach here
+        except BreakRailsException as e:
+            assert_result(self, e.result, success=True, value=5)
+
+    def test_on_success_operate_when_break_rails_give_func_fail(self):
+        try:
+            Result.ok(1).on_success_operate_when(True, lambda: Result.fail(), break_rails=True)
+            self.assertTrue(False)  # should not reach here
+        except BreakRailsException as e:
+            assert_result(self, e.result, success=False)
+
+    def test_on_success_operate_when_break_rails_give_func_raise_exception(self):
+        try:
+            Result.ok(1).on_success_operate_when(True, function_raise_exception, break_rails=True)
+            self.assertTrue(False)  # should not reach here
+        except BreakRailsException as e:
+            assert_result_with_type(self, e.result, success=False, detail_type=ErrorDetail)
+            assert_error_detail(self, e.result.detail, title='An error occurred',
+                                message="Operation failed with 1 attempts. The details of the 1 errors are stored in "
+                                        "the more_data field. At least one of the errors was an exception type, the "
+                                        "first exception being stored in the exception field.",
+                                exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION], code=500)
 
     # endregion
 
@@ -217,6 +293,34 @@ class TestResult(unittest.TestCase):
         assert_result_with_type(self, new_result, success=True, value=1, detail_type=SuccessDetail)
         self.assertEqual(["Data1", "Data2"], new_result.detail.more_data)
 
+    def test_on_success_add_more_data_give_func_ok(self):
+        result = Result.ok(1).on_success_add_more_data(lambda: 5)
+        assert_result_with_type(self, result, success=True, value=1, detail_type=SuccessDetail)
+        assert_result_detail(test_class=self, result_detail=result.detail, title="Operation was successful",
+                             code=200, more_data=[5])
+
+        result = Result.ok(1).on_success_add_more_data(lambda value: value + 1)
+        assert_result_with_type(self, result, success=True, value=1, detail_type=SuccessDetail)
+        assert_result_detail(test_class=self, result_detail=result.detail, title="Operation was successful",
+                             code=200, more_data=[2])
+
+        result = Result.ok(1).on_success_add_more_data(lambda value, prev_result: value + prev_result.value)
+        assert_result_with_type(self, result, success=True, value=1, detail_type=SuccessDetail)
+        assert_result_detail(test_class=self, result_detail=result.detail, title="Operation was successful",
+                             code=200, more_data=[2])
+
+    def test_on_success_add_more_data_give_func_fail(self):
+        result = Result.ok(1).on_success_add_more_data(lambda: Result.fail(FAKE_ERROR))
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, title="An error occurred",
+                            message="Operation failed with 1 attempts. "
+                                    "The details of the 1 errors are stored in the more_data field. ",
+                            code=500, more_data=[FAKE_ERROR])
+
+        result = Result.ok(1).on_success_add_more_data(lambda: Result.fail(FAKE_ERROR), ignore_errors=True)
+        assert_result(self, result, success=True, value=1)
+        self.assertIsNone(result.detail)
+
     # endregion
 
     # region on_success_new_detail
@@ -237,22 +341,215 @@ class TestResult(unittest.TestCase):
         assert_result(self, new_result, success=True, value=1)
         self.assertIsNone(new_result.detail)
 
+    def test_on_success_new_detail_give_invalid_detail(self):
+        result = Result.ok(1).on_success_new_detail(ErrorDetail())
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, title="An error occurred",
+                            message="Type of new detail 'ErrorDetail' is not instance of 'SuccessDetail'",
+                            code=500)
+
+        result = Result.ok(1).on_success_new_detail(lambda: ErrorDetail())
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, title="An error occurred",
+                            message="Type of new detail 'ErrorDetail' is not instance of 'SuccessDetail'",
+                            code=500)
+
+    def test_on_success_new_detail_give_func_ok(self):
+        result = Result.ok(1).on_success_new_detail(lambda: SuccessDetail())
+
+        assert_result_with_type(self, result, success=True, value=1, detail_type=SuccessDetail)
+
+    def test_on_success_new_detail_give_func_fail(self):
+        result = Result.ok(1).on_success_new_detail(lambda: Result.fail())
+
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+
     # endregion
 
     # region on_success_tee
 
-    def test_on_success_tee(self):
-        result = Result.ok(1)
-        new_result = result.on_success_tee(None)
-        assert_result(self, new_result, success=True, value=1)
+    def test_on_success_tee_give_invalid_func(self):
+        # None
+        result = Result.ok(1).on_success_tee(None)
+        assert_invalid_func(self, result)
 
-        result = Result.ok(1)
-        new_result = result.on_success_tee(lambda: Result.fail())
-        assert_result(self, new_result, success=True, value=1)
+        # Not callable
+        result = Result.ok(1).on_success_tee("Not callable")
+        assert_invalid_func(self, result)
+
+    def test_on_success_tee_on_fail_result(self):
+        result = Result.fail().on_success_tee(lambda: 5)
+        assert_result(self, result, success=False)
+
+    def test_on_success_tee_success_func(self):
+        result = Result.ok(1).on_success_tee(lambda: 5)
+        assert_result(self, result, success=True, value=1)
+
+    def test_on_success_tee_fail_func(self):
+        result = Result.ok(1).on_success_tee(lambda: Result.fail())
+        assert_result(self, result, success=False)
+
+    def test_on_success_tee_fail_func_set_ignore_errors(self):
+        result = Result.ok(1).on_success_tee(lambda: Result.fail(), ignore_errors=True)
+        assert_result(self, result, success=True, value=1)
+
+    def test_on_success_tee_use_prev_value(self):
+        result = Result.ok(1).on_success_tee(lambda value: Result.fail(ErrorDetail(message=f"prev value: {value}")))
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(test_class=self, error_detail=result.detail, title='An error occurred',
+                            message="prev value: 1", code=500)
+
+    def test_on_success_tee_use_prev_value_and_result(self):
+        result = Result.ok(1, SuccessDetail()).on_success_tee(
+            lambda value, prev_result: Result.fail(ErrorDetail(
+                message=f"prev value: {value}. prev detail type: {type(prev_result.detail).__name__}")))
+
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(test_class=self, error_detail=result.detail, title='An error occurred',
+                            message="prev value: 1. prev detail type: SuccessDetail", code=500)
+
+    def test_on_success_tee_give_too_many_args(self):
+        result = Result.ok(1, SuccessDetail()).on_success_tee(lambda a, b, c: Result.fail())
+
+        assert_result_with_type(self, result, success=False, detail_type=ValidationError)
+        assert_error_detail(test_class=self, error_detail=result.detail, title='One or more validation errors occurred',
+                            message="<lambda>() takes 3 arguments. It cannot be executed. "
+                                    "maximum of 2 parameters is acceptable.", code=400)
+
+    # endregion
+
+    # region on_success_new_detail
+
+    def test_on_fail_new_detail_on_success_result(self):
+        result = Result.ok(1, SuccessDetail())
+
+        new_result = result.on_fail_new_detail(ErrorDetail())
+
+        assert_result_with_type(self, new_result, success=True, value=1, detail_type=SuccessDetail)
+
+    def test_on_fail_new_detail(self):
+        result = Result.fail(ErrorDetail())
+
+        new_result = result.on_fail_new_detail(None)
+
+        assert_result(self, new_result, success=False)
+        self.assertIsNone(new_result.detail)
+
+    def test_on_fail_new_detail_give_invalid_detail(self):
+        result = Result.fail().on_fail_new_detail(SuccessDetail())
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, title="An error occurred",
+                            message="Type of new detail 'SuccessDetail' is not instance of 'ErrorDetail'.",
+                            code=500)
+
+        result = Result.fail().on_fail_new_detail(lambda: SuccessDetail())
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, title="An error occurred",
+                            message="Type of new detail 'SuccessDetail' is not instance of 'ErrorDetail'.",
+                            code=500)
+
+    def test_on_fail_new_detail_give_func_ok(self):
+        result = Result.fail().on_fail_new_detail(lambda: ErrorDetail())
+
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+
+    def test_on_fail_new_detail_give_func_fail(self):
+        result = Result.fail().on_fail_new_detail(lambda: Result.fail())
+
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+
+    # endregion
+
+    # region on_success_break
+
+    def test_on_success_break_on_fail_result(self):
+        result = Result.fail().on_success_break(True)
+
+        assert_result(self, result, success=False)
+
+    def test_on_success_break_with_condition_false(self):
+        result = Result.ok(1).on_success_break(False)
+        assert_result(self, result, success=True, value=1)
+
+        result = Result.ok(1).on_success_break(lambda: False)
+        assert_result(self, result, success=True, value=1)
+
+        result = Result.ok(1).on_success_break(lambda: Result.ok(False))
+        assert_result(self, result, success=True, value=1)
+
+    def test_on_success_break_give_func_fails(self):
+        result = Result.ok(1).on_success_break(lambda: Result.fail(FAKE_ERROR))
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, title="fake", code=500)
+
+        result = Result.ok(1).on_success_break(function_raise_exception)
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, title="An error occurred",
+                            message="Operation failed with 1 attempts. The details of the 1 errors are stored in the "
+                                    "more_data field. At least one of the errors was an exception type, the first "
+                                    "exception being stored in the exception field.", code=500,
+                            exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION])
+
+    def test_on_success_break_with_condition_true(self):
+        self.assertRaises(BreakRailsException, lambda: Result.ok(1).on_success_break(True))
+        self.assertRaises(BreakRailsException, lambda: Result.ok(1).on_success_break(lambda: True))
+        self.assertRaises(BreakRailsException, lambda: Result.ok(1).on_success_break(lambda: Result.ok(True)))
+
+    def test_on_success_break_use_prev_results(self):
+        self.assertRaises(BreakRailsException, lambda: Result.ok(1).on_success_break(lambda value: value == 1))
+        self.assertRaises(BreakRailsException,
+                          lambda: Result.ok(1).on_success_break(lambda value, prev_result: value == prev_result.value))
+
+    # endregion
+
+    # region on_success_fail_when
+
+    def test_on_success_fail_when_on_fail_result(self):
+        result = Result.fail().on_success_fail_when(True, ErrorDetail())
+
+        assert_result(self, result, success=False)
+        self.assertIsNone(result.detail)
+
+    def test_on_success_fail_when_condition_is_false(self):
+        result = Result.ok(1).on_success_fail_when(False)
+
+        assert_result(self, result, success=True, value=1)
+
+    def test_on_success_fail_with_default_error_detail(self):
+        result = Result.ok(1).on_success_fail_when(True)
+
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+
+    def test_on_success_fail_when_default_custom_detail(self):
+        result = Result.ok(1).on_success_fail_when(True, BadRequestError())
+
+        assert_result_with_type(self, result, success=False, detail_type=BadRequestError)
+
+    def test_on_success_fail_when_give_func_for_condition(self):
+        result = Result.ok(1).on_success_fail_when(lambda value, prev_result: value and prev_result.success)
+
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+
+    def test_on_success_fail_when_give_func_with_too_many_args(self):
+        result = Result.ok(1).on_success_fail_when(lambda value, prev_result, b: prev_result.success)
+
+        assert_result_with_type(self, result, success=False, detail_type=ValidationError)
+        assert_error_detail(self, error_detail=result.detail, title="One or more validation errors occurred",
+                            code=400, message="<lambda>() takes 3 arguments. It cannot be executed. "
+                                              "maximum of 2 parameters is acceptable.")
 
     # endregion
 
     # region on_fail
+
+    def test_on_fail_give_invalid_func(self):
+        # None
+        result = Result.fail().on_fail(None)
+        assert_invalid_func(self, result)
+
+        # Not callable
+        result = Result.fail().on_fail("not callable")
+        assert_invalid_func(self, result)
 
     def test_on_fail_with_success_result(self):
         success_result = Result.ok(5)
@@ -294,6 +591,51 @@ class TestResult(unittest.TestCase):
 
     # endregion
 
+    # region on_fail_operate_when
+
+    def test_on_fail_operate_when_previous_success(self):
+        result = Result.ok(1).on_fail_operate_when(True, lambda: Result.fail())
+
+        assert_result(self, result, success=True, value=1)
+
+    def test_on_fail_operate_when_use_previous_result(self):
+        result = Result.fail().on_fail_operate_when(lambda prev_result: not prev_result.success,
+                                                    lambda prev_result: Result.ok(prev_result.success))
+
+        assert_result(self, result, success=True, value=False)
+
+    def test_on_fail_operate_when_break_rails_with_condition_false(self):
+        result = Result.fail().on_fail_operate_when(False, lambda: 5, break_rails=True)
+        assert_result(self, result, success=False)
+
+    def test_on_fail_operate_when_break_rails_with_condition_true(self):
+        try:
+            Result.fail().on_fail_operate_when(True, lambda: 5, break_rails=True)
+            self.assertTrue(False)  # should not reach here
+        except BreakRailsException as e:
+            assert_result(self, e.result, success=True, value=5)
+
+    def test_on_fail_operate_when_break_rails_give_func_fail(self):
+        try:
+            Result.fail().on_fail_operate_when(True, lambda: Result.fail(FAKE_ERROR), break_rails=True)
+            self.assertTrue(False)  # should not reach here
+        except BreakRailsException as e:
+            assert_result_with_type(self, e.result, success=False, detail_type=ErrorDetail)
+
+    def test_on_fail_operate_when_break_rails_give_func_raise_exception(self):
+        try:
+            Result.fail().on_fail_operate_when(True, function_raise_exception, break_rails=True)
+            self.assertTrue(False)  # should not reach here
+        except BreakRailsException as e:
+            assert_result_with_type(self, e.result, success=False, detail_type=ErrorDetail)
+            assert_error_detail(self, e.result.detail, title='An error occurred',
+                                message="Operation failed with 1 attempts. The details of the 1 errors are stored in "
+                                        "the more_data field. At least one of the errors was an exception type, the "
+                                        "first exception being stored in the exception field.",
+                                exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION], code=500)
+
+    # endregion
+
     # region on_fail_add_more_data
 
     def test_on_fail_add_more_data_on_success_result(self):
@@ -309,7 +651,7 @@ class TestResult(unittest.TestCase):
 
         new_result = result.on_fail_add_more_data(None)
 
-        assert_result(self, new_result, success=False,)
+        assert_result(self, new_result, success=False, )
         self.assertIsNone(new_result.detail)
 
     def test_on_fail_add_more_data_give_object(self):
@@ -328,18 +670,53 @@ class TestResult(unittest.TestCase):
         assert_result_with_type(self, new_result, success=False, detail_type=ErrorDetail)
         self.assertEqual(["Data1", "Data2"], new_result.detail.more_data)
 
+    def test_on_fail_add_more_data_give_func_ok(self):
+        result = Result.fail().on_fail_add_more_data(lambda: 5)
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_result_detail(test_class=self, result_detail=result.detail, title="An error occurred",
+                             code=500, more_data=[5])
+
+        result = Result.fail().on_fail_add_more_data(lambda prev_result: f"Success: {prev_result.success}")
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_result_detail(test_class=self, result_detail=result.detail, title="An error occurred",
+                             code=500, more_data=["Success: False"])
+
+    def test_on_fail_add_more_data_give_func_fail(self):
+        result = Result.fail().on_fail_add_more_data(lambda: Result.fail(FAKE_ERROR))
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, title="An error occurred",
+                            message="Operation failed with 1 attempts. "
+                                    "The details of the 1 errors are stored in the more_data field. ",
+                            code=500, more_data=[FAKE_ERROR])
+
     # endregion
 
     # region on_fail_tee
 
-    def test_on_fail_tee(self):
-        result = Result.fail()
-        new_result = result.on_fail_tee(None)
-        assert_result(self, new_result, success=False)
+    def test_on_fail_tee_give_invalid_func(self):
+        # None
+        result = Result.fail().on_fail_tee(None)
+        assert_invalid_func(self, result)
 
-        result = Result.fail()
-        new_result = result.on_fail_tee(lambda: Result.ok())
-        assert_result(self, new_result, success=False)
+        # Not callable
+        result = Result.fail().on_fail_tee("string")
+        assert_invalid_func(self, result)
+
+    def test_on_fail_tee_success_func(self):
+        result = Result.fail().on_fail_tee(lambda: Result.ok())
+        assert_result(self, result, success=False)
+
+    def test_on_fail_tee_fail_func(self):
+        result = Result.fail().on_fail_tee(lambda: Result.fail(FAKE_ERROR))
+
+        assert_result(self, result, success=False, detail=FAKE_ERROR)
+        assert_error_detail(test_class=self, error_detail=result.detail, title='fake', code=500)
+
+    def test_on_fail_tee_fail_func_set_ignore_errors(self):
+        result = Result.fail().on_fail_tee(lambda: Result.fail(FAKE_ERROR), ignore_errors=True)
+
+        assert_result(self, result, success=False)
+        self.assertIsNone(result.detail)
 
     # endregion
 
@@ -382,25 +759,46 @@ class TestResult(unittest.TestCase):
             self.assertEqual(Exception, type(e))
             self.assertTrue(str(e) != "" or None)
 
-
     # endregion
 
-    # region on_success_new_detail
+    # region on_fail_break
 
-    def test_on_fail_new_detail_on_success_result(self):
-        result = Result.ok(1, SuccessDetail())
+    def test_on_fail_break_on_success_result(self):
+        result = Result.ok(1).on_fail_break(True)
 
-        new_result = result.on_fail_new_detail(ErrorDetail())
+        assert_result(self, result, success=True, value=1)
 
-        assert_result_with_type(self, new_result, success=True, value=1, detail_type=SuccessDetail)
+    def test_on_fail_break_with_condition_false(self):
+        result = Result.fail().on_fail_break(False)
+        assert_result(self, result, success=False)
 
-    def test_on_fail_new_detail(self):
-        result = Result.fail(ErrorDetail())
+        result = Result.fail().on_fail_break(lambda: False)
+        assert_result(self, result, success=False)
 
-        new_result = result.on_fail_new_detail(None)
+        result = Result.fail().on_fail_break(lambda: Result.ok(False))
+        assert_result(self, result, success=False)
 
-        assert_result(self, new_result, success=False)
-        self.assertIsNone(new_result.detail)
+    def test_on_fail_break_give_func_fails(self):
+        result = Result.fail().on_fail_break(lambda: Result.fail(FAKE_ERROR))
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, title="fake", code=500)
+
+        result = Result.fail().on_fail_break(function_raise_exception)
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, title="An error occurred",
+                            message="Operation failed with 1 attempts. The details of the 1 errors are stored in the "
+                                    "more_data field. At least one of the errors was an exception type, the first "
+                                    "exception being stored in the exception field.", code=500,
+                            exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION])
+
+    def test_on_fail_break_with_condition_true(self):
+        self.assertRaises(BreakRailsException, lambda: Result.fail().on_fail_break(True))
+        self.assertRaises(BreakRailsException, lambda: Result.fail().on_fail_break(lambda: True))
+        self.assertRaises(BreakRailsException, lambda: Result.fail().on_fail_break(lambda: Result.ok(True)))
+
+    def test_on_fail_break_use_prev_results(self):
+        self.assertRaises(BreakRailsException,
+                          lambda: Result.fail().on_fail_break(lambda prev_result: not prev_result.success))
 
     # endregion
 
@@ -434,6 +832,19 @@ class TestResult(unittest.TestCase):
         assert_error_detail(self, error_detail=result.detail, title="An error occurred", code=500,
                             more_data=[{'prev_detail': FAKE_ERROR}])
 
+    def test_fail_when_give_func_for_condition(self):
+        result = Result.ok(1).fail_when(lambda prev_result: prev_result.success)
+
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+
+    def test_fail_when_give_func_with_too_many_args(self):
+        result = Result.ok(1).fail_when(lambda prev_result, b: prev_result.success)
+
+        assert_result_with_type(self, result, success=False, detail_type=ValidationError)
+        assert_error_detail(self, error_detail=result.detail, title="One or more validation errors occurred",
+                            code=400, message="<lambda>() takes 2 arguments. It cannot be executed. "
+                                              "maximum of 1 parameters is acceptable.")
+
     # endregion
 
     # region convert_to_result
@@ -462,15 +873,17 @@ class TestResult(unittest.TestCase):
 
     def test_try_func_give_none(self):
         result = try_func(None)
-        self.assertFalse(result.success)
-        assert_error_detail(self, error_detail=result.detail, title="An error occurred",
-                            message="The input function can not be None.", code=500)
+
+        assert_result_with_type(test_class=self, result=result, success=False, detail_type=ValidationError)
+        assert_error_detail(self, error_detail=result.detail, title="One or more validation errors occurred",
+                            message="The input function is not valid.", code=400)
 
     def test_try_func_give_func_with_parameters(self):
         result = try_func(lambda x: x)
-        self.assertFalse(result.success)
-        assert_error_detail(self, error_detail=result.detail, title="An error occurred",
-                            message='<lambda>() takes 1 arguments. It cannot be executed.', code=500)
+
+        assert_result_with_type(test_class=self, result=result, success=False, detail_type=ValidationError)
+        assert_error_detail(self, error_detail=result.detail, title="One or more validation errors occurred",
+                            message='<lambda>() takes 1 arguments. It cannot be executed.', code=400)
 
     def test_try_func_give_func_ok(self):
         result = try_func(lambda: Result.ok(5))
@@ -513,9 +926,9 @@ class TestResult(unittest.TestCase):
     def test_try_func_on_result_give_none(self):
         result = Result.ok().try_func(None)
 
-        self.assertFalse(result.success)
-        assert_error_detail(self, error_detail=result.detail, title="An error occurred",
-                            message='The input function can not be None.', code=500)
+        assert_result_with_type(test_class=self, result=result, success=False, detail_type=ValidationError)
+        assert_error_detail(self, error_detail=result.detail, title="One or more validation errors occurred",
+                            message='The input function is not valid.', code=400)
 
     def test_try_func_without_parameters_on_success_result(self):
         result = Result.ok().try_func(lambda: 5)
@@ -548,11 +961,12 @@ class TestResult(unittest.TestCase):
     def test_try_func_without_parameters_on_failed_result(self):
         result = Result.fail().try_func(lambda: 5)
 
-        assert_error_detail(self, error_detail=result.detail, title="An error occurred",
+        assert_result_with_type(test_class=self, result=result, success=False, detail_type=ValidationError)
+        assert_error_detail(self, error_detail=result.detail, title="One or more validation errors occurred",
                             message="The previous function failed. "
                                     "The new function does not have a parameter to get the previous result. "
                                     "Either define a function that accepts a parameter or set skip_previous_error to True.",
-                            code=500)
+                            code=400)
 
     def test_try_func_without_parameters_on_failed_result_with_skip_previous_error(self):
         result = Result.fail().try_func(lambda: 5, ignore_previous_error=True)
@@ -601,9 +1015,187 @@ class TestResult(unittest.TestCase):
     def test_try_func_give_invalid_func(self):
         result = Result.ok().try_func(lambda x, y: x)
 
-        self.assertFalse(result.success)
-        assert_error_detail(self, error_detail=result.detail, title="An error occurred",
-                            message='<lambda>() takes 2 arguments. It cannot be executed.', code=500)
+        assert_result_with_type(test_class=self, result=result, success=False, detail_type=ValidationError)
+        assert_error_detail(self, error_detail=result.detail, title="One or more validation errors occurred",
+                            message='<lambda>() takes 2 arguments. It cannot be executed.', code=400)
+
+    # endregion
+
+    # region operate_when
+
+    def test_operate_when_give_bool_condition(self):
+        result = Result.ok(1).operate_when(True, lambda: Result.fail())
+        assert_result(self, result, success=False)
+
+        result = Result.ok(1).operate_when(False, lambda: Result.fail())
+        assert_result(self, result, success=True, value=1)
+
+    def test_operate_when_give_func_as_condition_failed(self):
+        result = Result.ok(1).operate_when(lambda: Result.fail(FAKE_ERROR), lambda: Result.fail())
+
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, error_detail=result.detail, title="fake", code=500)
+
+    def test_operate_when_give_func_as_condition(self):
+        # True
+        result = Result.ok(1).operate_when(lambda: True, lambda: Result.fail())
+        assert_result(self, result, success=False)
+        result = Result.ok(1).operate_when(lambda: Result.ok(), lambda: Result.fail())
+        assert_result(self, result, success=False)
+        result = Result.ok(1).operate_when(lambda: Result.ok("Value is not instance of bool"), lambda: Result.fail())
+        assert_result(self, result, success=False)
+        result = Result.ok(1).operate_when(lambda: Result.ok(True), lambda: Result.fail())
+        assert_result(self, result, success=False)
+        result = Result.ok(1).operate_when(lambda prev: Result.ok(prev.value), lambda: Result.fail())
+        assert_result(self, result, success=False)
+
+        # False
+        result = Result.ok(1).operate_when(lambda: False, lambda: Result.fail())
+        assert_result(self, result, success=True, value=1)
+        result = Result.ok(1).operate_when(lambda: Result.ok(False), lambda: Result.fail())
+        assert_result(self, result, success=True, value=1)
+        result = Result.ok(1).operate_when(lambda prev: Result.ok(not prev.value), lambda: Result.fail())
+        assert_result(self, result, success=True, value=1)
+
+    def test_operate_when_give_func_with_too_many_args(self):
+        result = Result.ok(1).operate_when(lambda a, b: True, lambda: Result.fail())
+
+        assert_result_with_type(test_class=self, result=result, success=False, detail_type=ValidationError)
+        assert_error_detail(self, error_detail=result.detail, title="One or more validation errors occurred",
+                            message='<lambda>() takes 2 arguments. It cannot be executed. '
+                                    'maximum of 1 parameters is acceptable.', code=400)
+
+    def test_operate_when_give_invalid_condition_type(self):
+        result = Result.ok(1).operate_when("This is not boolean or function", lambda: Result.fail())
+
+        assert_result_with_type(test_class=self, result=result, success=False, detail_type=ValidationError)
+        assert_error_detail(self, error_detail=result.detail, title="One or more validation errors occurred",
+                            message='The condition only can be a function or a boolean. '
+                                    'str is not acceptable.', code=400)
+
+    def test_operate_when_break_rails_with_condition_false(self):
+        result = Result.fail().operate_when(False, lambda: 5, break_rails=True)
+        assert_result(self, result, success=False)
+
+    def test_operate_when_break_rails_with_condition_true(self):
+        try:
+            Result.fail().operate_when(True, lambda: 5, break_rails=True)
+            self.assertTrue(False)  # should not reach here
+        except BreakRailsException as e:
+            assert_result(self, e.result, success=True, value=5)
+
+    def test_operate_when_break_rails_give_func_fail(self):
+        try:
+            Result.fail().operate_when(True, lambda: Result.fail(FAKE_ERROR), break_rails=True)
+            self.assertTrue(False)  # should not reach here
+        except BreakRailsException as e:
+            assert_result_with_type(self, e.result, success=False, detail_type=ErrorDetail)
+
+    def test_operate_when_break_rails_give_func_raise_exception(self):
+        try:
+            Result.fail().operate_when(True, function_raise_exception, break_rails=True)
+            self.assertTrue(False)  # should not reach here
+        except BreakRailsException as e:
+            assert_result_with_type(self, e.result, success=False, detail_type=ErrorDetail)
+            assert_error_detail(self, e.result.detail, title='An error occurred',
+                                message="Operation failed with 1 attempts. The details of the 1 errors are stored in "
+                                        "the more_data field. At least one of the errors was an exception type, the "
+                                        "first exception being stored in the exception field.",
+                                exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION], code=500)
+
+    # endregion
+
+    # region finally_tee
+
+    def test_finally_tee_ok(self):
+        result = Result.ok(1).finally_tee(lambda: Result.ok(5))
+        assert_result(self, result, success=True, value=1)
+
+        result = Result.fail().finally_tee(lambda: Result.ok(5))
+        assert_result(self, result, success=False)
+
+    def test_finally_tee_use_prev_result_ok(self):
+        result = Result.ok(1).finally_tee(lambda prev_result: Result.ok(prev_result.value + 1))
+        assert_result(self, result, success=True, value=1)
+
+        result = Result.fail().finally_tee(lambda prev_result: Result.ok(prev_result.success))
+        assert_result(self, result, success=False)
+
+    def test_finally_tee_fail(self):
+        result = Result.ok(1).finally_tee(lambda: Result.fail(FAKE_ERROR))
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+
+        result = Result.fail().finally_tee(lambda: Result.fail(FAKE_ERROR))
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+
+    def test_finally_tee_use_prev_result_fail(self):
+        result = Result.ok(1).finally_tee(lambda prev_result: Result.fail(ErrorDetail(message=f"{prev_result.value}")))
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, error_detail=result.detail, title="An error occurred", message="1", code=500)
+
+        result = Result.fail().finally_tee(
+            lambda prev_result: Result.fail(ErrorDetail(message=f"{prev_result.success}")))
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, error_detail=result.detail, title="An error occurred", message="False", code=500)
+
+    # endregion
+
+    # region BreakRails Exception
+
+    def test_break_rails_ok(self):
+        # Success
+        result = Result.ok(1, SuccessDetail())
+        exception = BreakRailsException(result)
+
+        assert_exception(self, exception, BreakRailsException)
+        self.assertEqual(result, exception.result)
+
+        # Failure
+        result = Result.fail(ErrorDetail())
+        exception = BreakRailsException(result)
+
+        assert_exception(self, exception, BreakRailsException)
+        self.assertEqual(result, exception.result)
+
+    def test_break_rails_give_none(self):
+        self.assertRaises(ValueError, lambda: BreakRailsException(None))
+        self.assertRaises(ValueError, lambda: BreakRailsException("Not result type"))
+
+    # endregion
+
+    # region break_rails
+
+    def test_break_rails_with_condition_false(self):
+        result = Result.ok(1).break_rails(False)
+        assert_result(self, result, success=True, value=1)
+
+        result = Result.ok(1).break_rails(lambda: False)
+        assert_result(self, result, success=True, value=1)
+
+        result = Result.ok(1).break_rails(lambda: Result.ok(False))
+        assert_result(self, result, success=True, value=1)
+
+    def test_break_rails_give_func_fails(self):
+        result = Result.ok(1).break_rails(lambda: Result.fail(FAKE_ERROR))
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, title="fake", code=500)
+
+        result = Result.ok(1).break_rails(function_raise_exception)
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, title="An error occurred",
+                            message="Operation failed with 1 attempts. The details of the 1 errors are stored in the "
+                                    "more_data field. At least one of the errors was an exception type, the first "
+                                    "exception being stored in the exception field.", code=500,
+                            exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION])
+
+    def test_break_rails_with_condition_true(self):
+        self.assertRaises(BreakRailsException, lambda: Result.ok(1).break_rails(True))
+        self.assertRaises(BreakRailsException, lambda: Result.ok(1).break_rails(lambda: True))
+        self.assertRaises(BreakRailsException, lambda: Result.ok(1).break_rails(lambda: Result.ok(True)))
+
+    def test_break_rails_use_prev_results(self):
+        self.assertRaises(BreakRailsException,
+                          lambda: Result.ok(1).break_rails(lambda prev_result: prev_result.value == 1))
 
     # endregion
 
