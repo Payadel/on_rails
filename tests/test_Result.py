@@ -461,6 +461,25 @@ class TestResult(unittest.TestCase):
         assert_result_with_type(self, new_result, success=False, detail_type=ErrorDetail)
         self.assertEqual(["Data1", "Data2"], new_result.detail.more_data)
 
+    def test_on_fail_add_more_data_give_func_ok(self):
+        result = Result.fail().on_fail_add_more_data(lambda: 5)
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_result_detail(test_class=self, result_detail=result.detail, title="An error occurred",
+                             code=500, more_data=[5])
+
+        result = Result.fail().on_fail_add_more_data(lambda prev_result: f"Success: {prev_result.success}")
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_result_detail(test_class=self, result_detail=result.detail, title="An error occurred",
+                             code=500, more_data=["Success: False"])
+
+    def test_on_fail_add_more_data_give_func_fail(self):
+        result = Result.fail().on_fail_add_more_data(lambda: Result.fail(FAKE_ERROR))
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, title="An error occurred",
+                            message="Operation failed with 1 attempts. "
+                                    "The details of the 1 errors are stored in the more_data field. ",
+                            code=500, more_data=[FAKE_ERROR])
+
     # endregion
 
     # region on_fail_tee
