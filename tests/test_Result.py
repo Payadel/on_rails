@@ -341,6 +341,29 @@ class TestResult(unittest.TestCase):
         assert_result(self, new_result, success=True, value=1)
         self.assertIsNone(new_result.detail)
 
+    def test_on_success_new_detail_give_invalid_detail(self):
+        result = Result.ok(1).on_success_new_detail(ErrorDetail())
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, title="An error occurred",
+                            message="Type of new detail 'ErrorDetail' is not instance of 'SuccessDetail'",
+                            code=500)
+
+        result = Result.ok(1).on_success_new_detail(lambda: ErrorDetail())
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, title="An error occurred",
+                            message="Type of new detail 'ErrorDetail' is not instance of 'SuccessDetail'",
+                            code=500)
+
+    def test_on_success_new_detail_give_func_ok(self):
+        result = Result.ok(1).on_success_new_detail(lambda: SuccessDetail())
+
+        assert_result_with_type(self, result, success=True, value=1, detail_type=SuccessDetail)
+
+    def test_on_success_new_detail_give_func_fail(self):
+        result = Result.ok(1).on_success_new_detail(lambda: Result.fail())
+
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+
     # endregion
 
     # region on_success_tee

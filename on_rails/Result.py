@@ -158,17 +158,33 @@ class Result(Generic[T]):
             return self
         return result  # pragma: no cover
 
-    def on_success_new_detail(self, new_detail: SuccessDetail):
+    def on_success_new_detail(self, new_detail_or_func: Union[SuccessDetail, Callable]):
         """
-        This function updates the result detail with the new detail.
+        This function updates the success detail of a result object with either a new detail or the result of a callable
+        function.
 
-        :param new_detail: new_detail is a parameter of type SuccessDetail that represents the new detail information to be
-        replaced to the current object
-        :type new_detail: SuccessDetail
-        :return: Returns result with new detail
+        :param new_detail_or_func: The parameter `new_detail_or_func` can either be an instance of `SuccessDetail` or a
+        callable function that takes two optional arguments: `previous.value` and `previous result`.
+        If it is a callable function, it will be called with these arguments and the result will be used as the new detail
+        :type new_detail_or_func: Union[SuccessDetail, Callable]
         """
+
         if not self.success:
             return self
+
+        new_detail = None
+        if callable(new_detail_or_func):
+            result = self.__call_func(new_detail_or_func, optional_args=[self.value, self])
+            if not result.success:
+                return result
+            new_detail = result.value
+        else:
+            new_detail = new_detail_or_func
+
+        if new_detail is not None and not isinstance(new_detail, SuccessDetail):
+            return Result.fail(
+                ErrorDetail(message=f"Type of new detail '{type(new_detail).__name__}' "
+                                    "is not instance of 'SuccessDetail'"))
         self.detail = new_detail
         return self
 
