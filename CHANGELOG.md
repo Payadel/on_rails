@@ -8,10 +8,10 @@ All notable changes to this project will be documented in this file. See [standa
 ### ⚠ BREAKING CHANGES
 
 * rename `ignore_error` to `ignore_errors` in `on_fail_add_more_data`
-* rename `convert_to_result` parameter
+* rename `convert_to_result` parameter from `output` to `value`
 * Previously, we ignore invalid `func` but now we validate it.
 * For validation errors, `ValidationError` is used instead of `ErrorDetail`.
-* Previously, only `Result` was passed, but now the first default param is `value`
+* Previously, only `Result` was passed to function, but now the first default param is `value` and the second is `Result`.
 
 ### Features
 
@@ -20,7 +20,7 @@ All notable changes to this project will be documented in this file. See [standa
 * accept function as parameter in `on_success_add_more_data` ([54add78](https://github.com/Payadel/on_rails/commit/54add78fbca437d4d75f38f9a147a7d725d23df6))
 * add `break_rails` ([12c8ca0](https://github.com/Payadel/on_rails/commit/12c8ca0895abfd91e3f3e1551cf296ace2da782b))
 * add `break_rails` parameter to `operate_when` functions ([7e725d7](https://github.com/Payadel/on_rails/commit/7e725d7c8b8e129b1f60292a5659bf65bb17b725))
-* add `BreakRails`. It breaks chaining of function ([1be17f4](https://github.com/Payadel/on_rails/commit/1be17f4e7635cc3a8c08079b3cf898e2c08a41f6))
+* add `BreakRailsExceptions`. It breaks chaining of function ([1be17f4](https://github.com/Payadel/on_rails/commit/1be17f4e7635cc3a8c08079b3cf898e2c08a41f6))
 * add `finally_tee` ([1c83d89](https://github.com/Payadel/on_rails/commit/1c83d8928a630ed0bf3d357e057d3629c9ffeb6d))
 * add `ignore_errors` param to `tee` functions ([315bc53](https://github.com/Payadel/on_rails/commit/315bc5368586df62ca3f57d2f79f2b58e25791cd))
 * add `ignore_errors` to `on_success_add_more_data` ([441ff03](https://github.com/Payadel/on_rails/commit/441ff035eb4a97226239c2963902bc3f638e9637))
@@ -35,6 +35,16 @@ All notable changes to this project will be documented in this file. See [standa
 * support Generic ([a45799a](https://github.com/Payadel/on_rails/commit/a45799af2b13914569b2d89aba44589bc4dfd996))
 * support prev result in `on_success_tee` like `on_success` ([fb85d2e](https://github.com/Payadel/on_rails/commit/fb85d2edd28413c474acb97306af553f96ae4427))
 * validate `func` in `on_success` ([6ffcb59](https://github.com/Payadel/on_rails/commit/6ffcb596551c2466dbc14146177ca31e04f3b7e5))
+
+
+### Fixes
+
+* add more validation for `func` param & update error types ([085fe9b](https://github.com/Payadel/on_rails/commit/085fe9beef411e68cb7731e6701032615d84e07b))
+* fix exception `There is no current event loop in thread` for `get_event_loop` ([0b100d5](https://github.com/Payadel/on_rails/commit/0b100d55e2331e25af70f90640e9a734fccbe25b))
+* rename `convert_to_result` parameter & use `Any` instead of `object` ([5cd552b](https://github.com/Payadel/on_rails/commit/5cd552becb8782359c3a38a2507bff4cf8434c7a))
+* rename `ignore_error` to `ignore_errors` in `on_fail_add_more_data` ([92177a6](https://github.com/Payadel/on_rails/commit/92177a61a94a052103525c30687ad90d07a9adbd))
+* use `Callable` type instead of `callable` ([61ebed3](https://github.com/Payadel/on_rails/commit/61ebed3dc5fa77f7b4a21893aecdf1c5b27af871))
+* validate `func` in `tee` functions ([7196627](https://github.com/Payadel/on_rails/commit/71966279c057e41a26945434069c18620ac83367))
 
 
 ### Development: CI/CD, Build, etc
@@ -67,15 +77,6 @@ All notable changes to this project will be documented in this file. See [standa
 * add message to asserts ([bbd6d31](https://github.com/Payadel/on_rails/commit/bbd6d31c963e690cbf1057632750428a8e62a0c3))
 * minor fix ([4bd2c17](https://github.com/Payadel/on_rails/commit/4bd2c17fb26a90290113acf86479f58ba7f0211d))
 
-
-### Fixes
-
-* add more validation for `func` param & update error types ([085fe9b](https://github.com/Payadel/on_rails/commit/085fe9beef411e68cb7731e6701032615d84e07b))
-* fix exception `There is no current event loop in thread` for `get_event_loop` ([0b100d5](https://github.com/Payadel/on_rails/commit/0b100d55e2331e25af70f90640e9a734fccbe25b))
-* rename `convert_to_result` parameter & use `Any` instead of `object` ([5cd552b](https://github.com/Payadel/on_rails/commit/5cd552becb8782359c3a38a2507bff4cf8434c7a))
-* rename `ignore_error` to `ignore_errors` in `on_fail_add_more_data` ([92177a6](https://github.com/Payadel/on_rails/commit/92177a61a94a052103525c30687ad90d07a9adbd))
-* use `Callable` type instead of `callable` ([61ebed3](https://github.com/Payadel/on_rails/commit/61ebed3dc5fa77f7b4a21893aecdf1c5b27af871))
-* validate `func` in `tee` functions ([7196627](https://github.com/Payadel/on_rails/commit/71966279c057e41a26945434069c18620ac83367))
 
 ## [2.1.0](https://github.com/Payadel/on_rails/compare/v2.0.1...v2.1.0) (2023-04-07)
 
