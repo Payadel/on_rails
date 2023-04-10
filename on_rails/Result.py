@@ -400,6 +400,25 @@ class Result(Generic[T]):
         return self.__operate_when(condition_or_func, func, [self],
                                    num_of_try, try_only_on_exceptions)
 
+    def on_fail_break(self, condition_or_func: Union[Callable, bool]):
+        """
+        The function raises a BreakRails exception if a given condition is true.
+
+        :param condition_or_func: The parameter `condition_or_func` can be either a callable function or a boolean value.
+        It is used to determine whether to break chaining of functions or not. If it is a callable function, it
+        will be called with two optional arguments: the value and the result of the previous operation.
+        :type condition_or_func: Union[Callable, bool]
+
+        :return: If `condition_or_func` is callable function and fails, it returns error result.
+        Otherwise, raise BreakRails exception
+
+        :raise BreakRails
+        """
+        if self.success:
+            return self
+
+        return self.break_rails(condition_or_func)
+
     # endregion
 
     def fail_when(self, condition: bool, error_detail: Optional[ErrorDetail] = None, add_prev_detail: bool = False):

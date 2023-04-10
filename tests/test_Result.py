@@ -615,6 +615,45 @@ class TestResult(unittest.TestCase):
 
     # endregion
 
+    # region on_fail_break
+
+    def test_on_fail_break_on_success_result(self):
+        result = Result.ok(1).on_fail_break(True)
+
+        assert_result(self, result, success=True, value=1)
+
+    def test_on_fail_break_with_condition_false(self):
+        result = Result.fail().on_fail_break(False)
+        assert_result(self, result, success=False)
+
+        result = Result.fail().on_fail_break(lambda: False)
+        assert_result(self, result, success=False)
+
+        result = Result.fail().on_fail_break(lambda: Result.ok(False))
+        assert_result(self, result, success=False)
+
+    def test_on_fail_break_give_func_fails(self):
+        result = Result.fail().on_fail_break(lambda: Result.fail(FAKE_ERROR))
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, title="fake", code=500)
+
+        result = Result.fail().on_fail_break(function_raise_exception)
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, title="An error occurred",
+                            message="Operation failed with 1 attempts. The details of the 1 errors are stored in the "
+                                    "more_data field. At least one of the errors was an exception type, the first "
+                                    "exception being stored in the exception field.", code=500, exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION])
+
+    def test_on_fail_break_with_condition_true(self):
+        self.assertRaises(BreakRails, lambda: Result.fail().on_fail_break(True))
+        self.assertRaises(BreakRails, lambda: Result.fail().on_fail_break(lambda: True))
+        self.assertRaises(BreakRails, lambda: Result.fail().on_fail_break(lambda: Result.ok(True)))
+
+    def test_on_fail_break_use_prev_results(self):
+        self.assertRaises(BreakRails, lambda: Result.fail().on_fail_break(lambda prev_result: not prev_result.success))
+
+    # endregion
+
     # region fail_when
 
     def test_fail_when_condition_is_false(self):
