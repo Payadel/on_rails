@@ -125,30 +125,30 @@ class Result(Generic[T]):
         return self.__call_func(func, optional_args=[self.value, self],
                                 num_of_try=num_of_try, try_only_on_exceptions=try_only_on_exceptions)
 
-    def on_success_add_more_data(self, object_or_fuc: Union[Any, Callable], ignore_errors: bool = False):
+    def on_success_add_more_data(self, object_or_func: Union[Any, Callable], ignore_errors: bool = False):
         """
         This function adds more data to a success response object.
 
-        :param object_or_fuc: The parameter `object_or_fuc` can be either an object or a function.
+        :param object_or_func: The parameter `object_or_fuc` can be either an object or a function.
         If it is a function, it will be called with `self.value` and `self` as optional arguments.
         Then if operation was successful, result of function will be added to more_data field. Otherwise, the error details are returned.
         If it is an object, it will be added to the `SuccessDetail` object
-        :type object_or_fuc: Any or Callable
+        :type object_or_func: Any or Callable
 
         :param ignore_errors: `ignore_error` is a boolean parameter that determines whether or not to ignore any errors that occur during the execution of the function. If `ignore_error` is set to `True`,
         any errors that occur will be ignored. If `ignore_error` is set to False, any errors that occur during the execution of the function will be returned.
         :type ignore_errors: bool (optional)
         """
-        if not self.success or object_or_fuc is None:
+        if not self.success or object_or_func is None:
             return self
 
-        if callable(object_or_fuc):
-            result = self.__call_func(object_or_fuc, optional_args=[self.value, self])
+        if callable(object_or_func):
+            result = self.__call_func(object_or_func, optional_args=[self.value, self])
             if not result.success:
                 return self if ignore_errors else result
             obj = result.value
         else:
-            obj = object_or_fuc
+            obj = object_or_func
 
         if not self.detail:
             self.detail = SuccessDetail()
@@ -253,31 +253,31 @@ class Result(Generic[T]):
         return self.try_func(func, num_of_try, ignore_previous_error=True,
                              try_only_on_exceptions=try_only_on_exceptions)
 
-    def on_fail_add_more_data(self, object_or_fuc: Union[Any, Callable], ignore_errors: bool = False):
+    def on_fail_add_more_data(self, object_or_func: Union[Any, Callable], ignore_errors: bool = False):
         """
         This function adds more data to an error detail object, and returns the original object or a new one
         with the added data.
 
-        :param object_or_fuc: The parameter `object_or_fuc` can be either an object or a function.
+        :param object_or_func: The parameter `object_or_fuc` can be either an object or a function.
         If it is a function, it will be called with `self` as optional arguments.
         Then if operation was successful, result of function will be added to more_data field. Otherwise, the error details are returned.
         If `object_or_fuc` is an object, it will be added to the `ErrorDetail` object
-        :type object_or_fuc: Any or Callable
+        :type object_or_func: Any or Callable
 
         :param ignore_errors: `ignore_error` is a boolean parameter that determines whether or not to ignore any errors that occur during the execution of the function. If `ignore_error` is set to `True`,
         any errors that occur will be ignored. If `ignore_error` is set to False, any errors that occur during the execution of the function will be returned.
         :type ignore_errors: bool (optional)
         """
-        if self.success or object_or_fuc is None:
+        if self.success or object_or_func is None:
             return self
 
-        if callable(object_or_fuc):
-            result = self.__call_func(object_or_fuc, optional_args=[self])
+        if callable(object_or_func):
+            result = self.__call_func(object_or_func, optional_args=[self])
             if not result.success:
                 return self if ignore_errors else result
             obj = result.value
         else:
-            obj = object_or_fuc
+            obj = object_or_func
 
         if not self.detail:
             self.detail = ErrorDetail()
@@ -344,8 +344,6 @@ class Result(Generic[T]):
             raise exception_type(str(detail))
         raise Exception(str(detail))
 
-    # endregion
-
     def on_fail_operate_when(self, condition_or_func: Union[Callable, bool], func: Callable,
                              num_of_try: int = 1, try_only_on_exceptions=True):
         """
@@ -375,6 +373,8 @@ class Result(Generic[T]):
             return self
         return self.__operate_when(condition_or_func, func, [self],
                                    num_of_try, try_only_on_exceptions)
+
+    # endregion
 
     def fail_when(self, condition: bool, error_detail: Optional[ErrorDetail] = None, add_prev_detail: bool = False):
         """
