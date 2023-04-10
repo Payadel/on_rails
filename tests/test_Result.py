@@ -10,7 +10,8 @@ from on_rails.ResultDetails.Errors.BadRequestError import BadRequestError
 from on_rails.ResultDetails.Errors.ValidationError import ValidationError
 from on_rails.ResultDetails.SuccessDetail import SuccessDetail
 from tests.helpers import (assert_error_detail, assert_invalid_func,
-                           assert_result, assert_result_with_type)
+                           assert_result, assert_result_detail,
+                           assert_result_with_type)
 
 FAKE_EXCEPTION = Exception("fake")
 FAKE_ERROR = ErrorDetail("fake")
@@ -261,6 +262,30 @@ class TestResult(unittest.TestCase):
 
         assert_result_with_type(self, new_result, success=True, value=1, detail_type=SuccessDetail)
         self.assertEqual(["Data1", "Data2"], new_result.detail.more_data)
+
+    def test_on_success_add_more_data_give_func_ok(self):
+        result = Result.ok(1).on_success_add_more_data(lambda: 5)
+        assert_result_with_type(self, result, success=True, value=1, detail_type=SuccessDetail)
+        assert_result_detail(test_class=self, result_detail=result.detail, title="Operation was successful",
+                             code=200, more_data=[5])
+
+        result = Result.ok(1).on_success_add_more_data(lambda value: value + 1)
+        assert_result_with_type(self, result, success=True, value=1, detail_type=SuccessDetail)
+        assert_result_detail(test_class=self, result_detail=result.detail, title="Operation was successful",
+                             code=200, more_data=[2])
+
+        result = Result.ok(1).on_success_add_more_data(lambda value, prev_result: value + prev_result.value)
+        assert_result_with_type(self, result, success=True, value=1, detail_type=SuccessDetail)
+        assert_result_detail(test_class=self, result_detail=result.detail, title="Operation was successful",
+                             code=200, more_data=[2])
+
+    def test_on_success_add_more_data_give_func_fail(self):
+        result = Result.ok(1).on_success_add_more_data(lambda: Result.fail(FAKE_ERROR))
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, title="An error occurred",
+                            message="Operation failed with 1 attempts. "
+                                    "The details of the 1 errors are stored in the more_data field. ",
+                            code=500, more_data=[FAKE_ERROR])
 
     # endregion
 
@@ -815,7 +840,8 @@ class TestResult(unittest.TestCase):
         assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
         assert_error_detail(self, error_detail=result.detail, title="An error occurred", message="1", code=500)
 
-        result = Result.fail().finally_tee(lambda prev_result: Result.fail(ErrorDetail(message=f"{prev_result.success}")))
+        result = Result.fail().finally_tee(
+            lambda prev_result: Result.fail(ErrorDetail(message=f"{prev_result.success}")))
         assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
         assert_error_detail(self, error_detail=result.detail, title="An error occurred", message="False", code=500)
 

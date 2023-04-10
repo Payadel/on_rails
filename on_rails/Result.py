@@ -125,20 +125,34 @@ class Result(Generic[T]):
         return self.__call_func(func, optional_args=[self.value, self],
                                 num_of_try=num_of_try, try_only_on_exceptions=try_only_on_exceptions)
 
-    def on_success_add_more_data(self, more_data: Any):
+    def on_success_add_more_data(self, object_or_fuc: Union[Any, Callable]):
         """
-        This function adds more data to the success detail if the current result is successful.
+        This function adds more data to a success response object.
 
-        :param more_data: more_data is an object that contains additional data to be added to the success response
-        :type more_data: Any
-        :return: either `ok` or `fail` result, depending on the success of adding more data to the `SuccessDetail` object.
+        :param object_or_fuc: The parameter `object_or_fuc` can be either an object or a function.
+        If it is a function, it will be called with `self.value` and `self` as optional arguments.
+        Then if operation was successful, result of function will be added to more_data field. Otherwise, the error details are returned.
+        If it is an object, it will be added to the `SuccessDetail` object
+        :type object_or_fuc: Any or Callable
         """
-        if not self.success or not more_data:
+        if not self.success or object_or_fuc is None:
             return self
+
+        if callable(object_or_fuc):
+            result = self.__call_func(object_or_fuc, optional_args=[self.value, self])
+            if not result.success:
+                return result
+            obj = result.value
+        else:
+            obj = object_or_fuc
+
         if not self.detail:
             self.detail = SuccessDetail()
-        result = try_func(lambda: self.detail.add_more_data(more_data))
-        return self if result.success else result
+
+        result = try_func(lambda: self.detail.add_more_data(obj))
+        if result.success:
+            return self
+        return result  # pragma: no cover
 
     def on_success_new_detail(self, new_detail: SuccessDetail):
         """
