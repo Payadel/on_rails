@@ -3,15 +3,15 @@
 import asyncio
 import unittest
 
-from on_rails.Result import Result, try_func
+from on_rails.Result import BreakRails, Result, try_func
 from on_rails.ResultDetail import ResultDetail
 from on_rails.ResultDetails.ErrorDetail import ErrorDetail
 from on_rails.ResultDetails.Errors.BadRequestError import BadRequestError
 from on_rails.ResultDetails.Errors.ValidationError import ValidationError
 from on_rails.ResultDetails.SuccessDetail import SuccessDetail
-from tests.helpers import (assert_error_detail, assert_invalid_func,
-                           assert_result, assert_result_detail,
-                           assert_result_with_type)
+from tests.helpers import (assert_error_detail, assert_exception,
+                           assert_invalid_func, assert_result,
+                           assert_result_detail, assert_result_with_type)
 
 FAKE_EXCEPTION = Exception("fake")
 FAKE_ERROR = ErrorDetail("fake")
@@ -365,6 +365,61 @@ class TestResult(unittest.TestCase):
 
     # endregion
 
+    # region on_success_new_detail
+
+    def test_on_fail_new_detail_on_success_result(self):
+        result = Result.ok(1, SuccessDetail())
+
+        new_result = result.on_fail_new_detail(ErrorDetail())
+
+        assert_result_with_type(self, new_result, success=True, value=1, detail_type=SuccessDetail)
+
+    def test_on_fail_new_detail(self):
+        result = Result.fail(ErrorDetail())
+
+        new_result = result.on_fail_new_detail(None)
+
+        assert_result(self, new_result, success=False)
+        self.assertIsNone(new_result.detail)
+
+    # endregion
+
+    # region on_success_break
+
+    def test_on_success_break_on_fail_result(self):
+        result = Result.fail().on_success_break(True)
+
+        assert_result(self, result, success=False)
+
+    def test_on_success_break_with_condition_false(self):
+        result = Result.ok(1).on_success_break(False)
+        assert_result(self, result, success=True, value=1)
+
+        result = Result.ok(1).on_success_break(lambda: False)
+        assert_result(self, result, success=True, value=1)
+
+        result = Result.ok(1).on_success_break(lambda: Result.ok(False))
+        assert_result(self, result, success=True, value=1)
+
+    def test_on_success_break_give_func_fails(self):
+        result = Result.ok(1).on_success_break(lambda: Result.fail(FAKE_ERROR))
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, title="fake", code=500)
+
+        result = Result.ok(1).on_success_break(function_raise_exception)
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, title="An error occurred",
+                            message="Operation failed with 1 attempts. The details of the 1 errors are stored in the "
+                                    "more_data field. At least one of the errors was an exception type, the first "
+                                    "exception being stored in the exception field.", code=500, exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION])
+
+    def test_on_success_break_with_condition_true(self):
+        self.assertRaises(BreakRails, lambda: Result.ok(1).on_success_break(True))
+        self.assertRaises(BreakRails, lambda: Result.ok(1).on_success_break(lambda: True))
+        self.assertRaises(BreakRails, lambda: Result.ok(1).on_success_break(lambda: Result.ok(True)))
+
+    # endregion
+
     # region on_fail
 
     def test_on_fail_give_invalid_func(self):
@@ -553,25 +608,6 @@ class TestResult(unittest.TestCase):
         except Exception as e:
             self.assertEqual(Exception, type(e))
             self.assertTrue(str(e) != "" or None)
-
-    # endregion
-
-    # region on_success_new_detail
-
-    def test_on_fail_new_detail_on_success_result(self):
-        result = Result.ok(1, SuccessDetail())
-
-        new_result = result.on_fail_new_detail(ErrorDetail())
-
-        assert_result_with_type(self, new_result, success=True, value=1, detail_type=SuccessDetail)
-
-    def test_on_fail_new_detail(self):
-        result = Result.fail(ErrorDetail())
-
-        new_result = result.on_fail_new_detail(None)
-
-        assert_result(self, new_result, success=False)
-        self.assertIsNone(new_result.detail)
 
     # endregion
 
@@ -867,6 +903,29 @@ class TestResult(unittest.TestCase):
             lambda prev_result: Result.fail(ErrorDetail(message=f"{prev_result.success}")))
         assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
         assert_error_detail(self, error_detail=result.detail, title="An error occurred", message="False", code=500)
+
+    # endregion
+
+    # region BreakRails
+
+    def test_break_rails_ok(self):
+        # Success
+        result = Result.ok(1, SuccessDetail())
+        exception = BreakRails(result)
+
+        assert_exception(self, exception, BreakRails)
+        self.assertEqual(result, exception.result)
+
+        # Failure
+        result = Result.fail(ErrorDetail())
+        exception = BreakRails(result)
+
+        assert_exception(self, exception, BreakRails)
+        self.assertEqual(result, exception.result)
+
+    def test_break_rails_give_none(self):
+        self.assertRaises(ValueError, lambda: BreakRails(None))
+        self.assertRaises(ValueError, lambda: BreakRails("Not result type"))
 
     # endregion
 

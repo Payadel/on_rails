@@ -51,16 +51,13 @@ def assert_error_detail(test_class: unittest.TestCase, error_detail: ErrorDetail
     test_class.assertTrue(error_detail.stack_trace, msg="stack trace")
 
 
-def assert_exception(test_class: unittest.TestCase, result: Result, exception_type=None):
-    test_class.assertFalse(result.success, msg="success")
-    detail: ExceptionError = result.detail
-    test_class.assertTrue(isinstance(detail, ExceptionError), msg="detail type")
-    if exception_type:
-        test_class.assertTrue(isinstance(detail.exception, exception_type), msg="exception type")
-
-
 def assert_invalid_func(test_class: unittest.TestCase, result: Result):
     assert_result_with_type(test_class=test_class, result=result, success=False, detail_type=ValidationError)
     assert_error_detail(test_class=test_class, error_detail=result.detail,
                         title='One or more validation errors occurred',
                         message="The input function is not valid.", code=400)
+
+
+def assert_exception(test_class: unittest.TestCase, exception, exception_type):
+    test_class.assertTrue(isinstance(exception, Exception), msg="exception must be instance of Exception")
+    test_class.assertTrue(isinstance(exception, exception_type), msg="exception type")

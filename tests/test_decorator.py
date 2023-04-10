@@ -5,8 +5,10 @@ import unittest
 from typing import Coroutine
 
 from on_rails.decorator import def_result
-from on_rails.Result import Result
+from on_rails.Result import BreakRails, Result
+from on_rails.ResultDetails.ErrorDetail import ErrorDetail
 from on_rails.ResultDetails.Errors.BadRequestError import BadRequestError
+from on_rails.ResultDetails.SuccessDetail import SuccessDetail
 from tests.helpers import assert_result, assert_result_detail
 
 
@@ -37,17 +39,18 @@ async def divide_numbers_async(a: int, b: int):
     return a / b
 
 
+def raise_exception(exception: Exception):
+    raise exception
+
+
+async def raise_exception_async(exception: Exception):
+    await asyncio.sleep(0)
+    raise exception
+
+
 class TestDefResultDecorator(unittest.TestCase):
     def test_def_result_on_simple_function_ok(self):
-        """
-        The function tests the `def_result` decorator on a simple synchronous and asynchronous function
-        and checks if the result is as expected.
-        """
         result = def_result(is_async=False)(divide_numbers)(10, 2)
-        assert_result(test_class=self, result=result, success=True, value=5)
-
-        result = def_result(is_async=True)(divide_numbers)(10, 2)
-        result = asyncio.get_event_loop().run_until_complete(result)
         assert_result(test_class=self, result=result, success=True, value=5)
 
     def test_def_result_on_simple_function_error(self):
@@ -56,18 +59,8 @@ class TestDefResultDecorator(unittest.TestCase):
         assert_result_detail(test_class=self, result_detail=result.detail, title="An exception occurred",
                              message="Cannot divide by zero", code=500)
 
-        result = def_result(is_async=True)(divide_numbers)(10, 0)
-        result = asyncio.get_event_loop().run_until_complete(result)
-        assert_result(test_class=self, result=result, success=False, detail=result.detail)
-        assert_result_detail(test_class=self, result_detail=result.detail, title="An exception occurred",
-                             message="Cannot divide by zero", code=500)
-
     def test_def_result_on_result_function_ok(self):
         result = def_result(is_async=False)(divide_numbers_support_result)(10, 2)
-        assert_result(test_class=self, result=result, success=True, value=5)
-
-        result = def_result(is_async=True)(divide_numbers_support_result)(10, 2)
-        result = asyncio.get_event_loop().run_until_complete(result)
         assert_result(test_class=self, result=result, success=True, value=5)
 
     def test_def_result_on_result_function_error(self):
@@ -76,18 +69,8 @@ class TestDefResultDecorator(unittest.TestCase):
         assert_result_detail(test_class=self, result_detail=result.detail, title="BadRequest Error",
                              message="Cannot divide by zero", code=400)
 
-        result = def_result(is_async=True)(divide_numbers_support_result)(10, 0)
-        result = asyncio.get_event_loop().run_until_complete(result)
-        assert_result(test_class=self, result=result, success=False, detail=result.detail)
-        assert_result_detail(test_class=self, result_detail=result.detail, title="BadRequest Error",
-                             message="Cannot divide by zero", code=400)
-
     def test_func_without_output_ok(self):
         result = def_result(is_async=False)(func_without_output_ok)()
-        assert_result(test_class=self, result=result, success=True, value=None)
-
-        result = def_result(is_async=True)(func_without_output_ok)()
-        result = asyncio.get_event_loop().run_until_complete(result)
         assert_result(test_class=self, result=result, success=True, value=None)
 
     def test_func_without_output_error(self):
@@ -96,17 +79,71 @@ class TestDefResultDecorator(unittest.TestCase):
         assert_result_detail(test_class=self, result_detail=result.detail, title="An exception occurred",
                              message="fake error", code=500)
 
-        result = def_result(is_async=True)(func_without_output_error)()
-        result = asyncio.get_event_loop().run_until_complete(result)
+    def test_break_rails_with_result_ok(self):
+        result_ok = Result.ok(1, SuccessDetail())
+        break_rails = BreakRails(result_ok)
+
+        result = def_result()(raise_exception)(break_rails)
+        self.assertEqual(result_ok, result)
+
+    def test_break_rails_with_result_fail(self):
+        result_fail = Result.fail(ErrorDetail())
+        break_rails = BreakRails(result_fail)
+
+        result = def_result()(raise_exception)(break_rails)
+        self.assertEqual(result_fail, result)
+
+
+class TestDefResultDecoratorAsync(unittest.IsolatedAsyncioTestCase):
+    async def test_def_result_on_simple_function_ok_async(self):
+        result = await def_result(is_async=True)(divide_numbers)(10, 2)
+        assert_result(test_class=self, result=result, success=True, value=5)
+
+    async def test_def_result_on_simple_function_error_async(self):
+        result = await def_result(is_async=True)(divide_numbers)(10, 0)
+        assert_result(test_class=self, result=result, success=False, detail=result.detail)
+        assert_result_detail(test_class=self, result_detail=result.detail, title="An exception occurred",
+                             message="Cannot divide by zero", code=500)
+
+    async def test_def_result_on_result_function_ok_async(self):
+        result = await def_result(is_async=True)(divide_numbers_support_result)(10, 2)
+        assert_result(test_class=self, result=result, success=True, value=5)
+
+    async def test_def_result_on_result_function_error_async(self):
+        result = await def_result(is_async=True)(divide_numbers_support_result)(10, 0)
+        assert_result(test_class=self, result=result, success=False, detail=result.detail)
+        assert_result_detail(test_class=self, result_detail=result.detail, title="BadRequest Error",
+                             message="Cannot divide by zero", code=400)
+
+    async def test_func_without_output_ok_async(self):
+        result = await def_result(is_async=True)(func_without_output_ok)()
+        assert_result(test_class=self, result=result, success=True, value=None)
+
+    async def test_func_without_output_error(self):
+        result = await def_result(is_async=True)(func_without_output_error)()
         assert_result(test_class=self, result=result, success=False, detail=result.detail)
         assert_result_detail(test_class=self, result_detail=result.detail, title="An exception occurred",
                              message="fake error", code=500)
 
-    def test_async(self):
+    async def test_async(self):
         result = def_result(is_async=True)(divide_numbers_async)(10, 5)
         self.assertTrue(isinstance(result, Coroutine))
-        result = asyncio.get_event_loop().run_until_complete(result)
+        result = await result
         assert_result(test_class=self, result=result, success=True, value=2)
+
+    async def test_break_rails_with_result_async(self):
+        result_ok = Result.ok(1, SuccessDetail())
+        break_rails = BreakRails(result_ok)
+
+        result = await def_result(is_async=True)(raise_exception_async)(break_rails)
+        self.assertEqual(result_ok, result)
+
+    async def test_break_rails_with_result_fail_async(self):
+        result_fail = Result.fail(ErrorDetail())
+        break_rails = BreakRails(result_fail)
+
+        result = await def_result(is_async=True)(raise_exception_async)(break_rails)
+        self.assertEqual(result_fail, result)
 
 
 if __name__ == '__main__':

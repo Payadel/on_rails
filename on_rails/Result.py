@@ -225,6 +225,30 @@ class Result(Generic[T]):
         return self.__operate_when(condition_or_func, func, [self.value, self],
                                    num_of_try, try_only_on_exceptions)
 
+    def on_success_break(self, condition_or_func: Union[Callable, bool]):
+        """
+        This function checks if a condition is met and raises a BreakRails exception if it is.
+
+        :param condition_or_func: The parameter `condition_or_func` can be either a callable function or a boolean value.
+        It is used to determine whether or not to break chaining of functions. If it is a callable function, it
+        will be called with two optional arguments: the current value and the current instance
+        :type condition_or_func: Union[Callable, bool]
+
+        :return: If `self.success` is `False`, then `self` is returned. If the condition or function passed to the method
+        returns `False`, then `self` is returned. Otherwise, a `BreakRails` exception is raised with the `result` attribute
+        set to the result of the condition or function.
+        """
+        if not self.success:
+            return self
+
+        result = self.__is_condition_pass(condition_or_func, [self.value, self])
+        if not result.success:
+            return result  # return error result
+        if not result.value:
+            return self
+
+        raise BreakRails(result=self)
+
     # endregion
 
     # region on_fail
@@ -510,6 +534,10 @@ class Result(Generic[T]):
                             num_of_try: int = 1, try_only_on_exceptions: bool = True):
         """
         This function checks if a given condition or function is true or false and returns a result accordingly.
+        If `condition_or_func` is a boolean value, it returns condition.
+        If `condition_or_func` is a callable function, it calls the function, then if function fails, returns error result,
+        otherwise checks the value of result function. if it exists and be boolean value, it returns value,
+        otherwise returns True.
         """
 
         if isinstance(condition_or_func, bool):
@@ -577,3 +605,27 @@ def try_func(func: Callable, num_of_try: int = 1, try_only_on_exceptions: bool =
 
     error_detail = generate_error(errors, num_of_try)
     return Result.fail(error_detail)
+
+
+# The class `BreakRails` defines an exception that takes a `Result` object as input.
+class BreakRails(Exception):
+    """
+    An exception for break fast chaining of functions.
+    It stores the last result.
+    """
+    result: Result
+
+    def __init__(self, result: Result):
+        """
+        This function initializes an object with a non-null and valid instance of the Result class.
+
+        :param result: The `result` parameter is an instance of the `Result` class. The constructor checks if
+        the `result` parameter is not `None` and is an instance of the `Result` class
+        :type result: Result
+        """
+        super().__init__()
+        if result is None:
+            raise ValueError("The result cannot be None")
+        if not isinstance(result, Result):
+            raise ValueError("The result must be an instance of Result")
+        self.result = result
