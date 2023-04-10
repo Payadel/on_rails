@@ -253,7 +253,7 @@ class Result(Generic[T]):
         return self.try_func(func, num_of_try, ignore_previous_error=True,
                              try_only_on_exceptions=try_only_on_exceptions)
 
-    def on_fail_add_more_data(self, object_or_fuc: Union[Any, Callable], ignore_error: bool = False):
+    def on_fail_add_more_data(self, object_or_fuc: Union[Any, Callable], ignore_errors: bool = False):
         """
         This function adds more data to an error detail object, and returns the original object or a new one
         with the added data.
@@ -264,9 +264,9 @@ class Result(Generic[T]):
         If `object_or_fuc` is an object, it will be added to the `ErrorDetail` object
         :type object_or_fuc: Any or Callable
 
-        :param ignore_error: `ignore_error` is a boolean parameter that determines whether or not to ignore any errors that occur during the execution of the function. If `ignore_error` is set to `True`,
+        :param ignore_errors: `ignore_error` is a boolean parameter that determines whether or not to ignore any errors that occur during the execution of the function. If `ignore_error` is set to `True`,
         any errors that occur will be ignored. If `ignore_error` is set to False, any errors that occur during the execution of the function will be returned.
-        :type ignore_error: bool (optional)
+        :type ignore_errors: bool (optional)
         """
         if self.success or object_or_fuc is None:
             return self
@@ -274,7 +274,7 @@ class Result(Generic[T]):
         if callable(object_or_fuc):
             result = self.__call_func(object_or_fuc, optional_args=[self])
             if not result.success:
-                return self if ignore_error else result
+                return self if ignore_errors else result
             obj = result.value
         else:
             obj = object_or_fuc
@@ -283,7 +283,7 @@ class Result(Generic[T]):
             self.detail = ErrorDetail()
 
         result = try_func(lambda: self.detail.add_more_data(obj))
-        if result.success or ignore_error:
+        if result.success or ignore_errors:
             return self
 
         result.detail.add_more_data(f"previous error: {self.detail}")  # pragma: no cover
