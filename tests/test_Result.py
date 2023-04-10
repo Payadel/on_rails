@@ -3,7 +3,7 @@
 import asyncio
 import unittest
 
-from on_rails.Result import BreakRails, Result, try_func
+from on_rails.Result import BreakRailsException, Result, try_func
 from on_rails.ResultDetail import ResultDetail
 from on_rails.ResultDetails.ErrorDetail import ErrorDetail
 from on_rails.ResultDetails.Errors.BadRequestError import BadRequestError
@@ -235,21 +235,21 @@ class TestResult(unittest.TestCase):
         try:
             Result.ok(1).on_success_operate_when(True, lambda: 5, break_rails=True)
             self.assertTrue(False)  # should not reach here
-        except BreakRails as e:
+        except BreakRailsException as e:
             assert_result(self, e.result, success=True, value=5)
 
     def test_on_success_operate_when_break_rails_give_func_fail(self):
         try:
             Result.ok(1).on_success_operate_when(True, lambda: Result.fail(), break_rails=True)
             self.assertTrue(False)  # should not reach here
-        except BreakRails as e:
+        except BreakRailsException as e:
             assert_result(self, e.result, success=False)
 
     def test_on_success_operate_when_break_rails_give_func_raise_exception(self):
         try:
             Result.ok(1).on_success_operate_when(True, function_raise_exception, break_rails=True)
             self.assertTrue(False)  # should not reach here
-        except BreakRails as e:
+        except BreakRailsException as e:
             assert_result_with_type(self, e.result, success=False, detail_type=ErrorDetail)
             assert_error_detail(self, e.result.detail, title='An error occurred',
                                 message="Operation failed with 1 attempts. The details of the 1 errors are stored in "
@@ -445,13 +445,13 @@ class TestResult(unittest.TestCase):
                             exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION])
 
     def test_on_success_break_with_condition_true(self):
-        self.assertRaises(BreakRails, lambda: Result.ok(1).on_success_break(True))
-        self.assertRaises(BreakRails, lambda: Result.ok(1).on_success_break(lambda: True))
-        self.assertRaises(BreakRails, lambda: Result.ok(1).on_success_break(lambda: Result.ok(True)))
+        self.assertRaises(BreakRailsException, lambda: Result.ok(1).on_success_break(True))
+        self.assertRaises(BreakRailsException, lambda: Result.ok(1).on_success_break(lambda: True))
+        self.assertRaises(BreakRailsException, lambda: Result.ok(1).on_success_break(lambda: Result.ok(True)))
 
     def test_on_success_break_use_prev_results(self):
-        self.assertRaises(BreakRails, lambda: Result.ok(1).on_success_break(lambda value: value == 1))
-        self.assertRaises(BreakRails,
+        self.assertRaises(BreakRailsException, lambda: Result.ok(1).on_success_break(lambda value: value == 1))
+        self.assertRaises(BreakRailsException,
                           lambda: Result.ok(1).on_success_break(lambda value, prev_result: value == prev_result.value))
 
     # endregion
@@ -528,21 +528,21 @@ class TestResult(unittest.TestCase):
         try:
             Result.fail().on_fail_operate_when(True, lambda: 5, break_rails=True)
             self.assertTrue(False)  # should not reach here
-        except BreakRails as e:
+        except BreakRailsException as e:
             assert_result(self, e.result, success=True, value=5)
 
     def test_on_fail_operate_when_break_rails_give_func_fail(self):
         try:
             Result.fail().on_fail_operate_when(True, lambda: Result.fail(FAKE_ERROR), break_rails=True)
             self.assertTrue(False)  # should not reach here
-        except BreakRails as e:
+        except BreakRailsException as e:
             assert_result_with_type(self, e.result, success=False, detail_type=ErrorDetail)
 
     def test_on_fail_operate_when_break_rails_give_func_raise_exception(self):
         try:
             Result.fail().on_fail_operate_when(True, function_raise_exception, break_rails=True)
             self.assertTrue(False)  # should not reach here
-        except BreakRails as e:
+        except BreakRailsException as e:
             assert_result_with_type(self, e.result, success=False, detail_type=ErrorDetail)
             assert_error_detail(self, e.result.detail, title='An error occurred',
                                 message="Operation failed with 1 attempts. The details of the 1 errors are stored in "
@@ -708,12 +708,12 @@ class TestResult(unittest.TestCase):
                             exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION])
 
     def test_on_fail_break_with_condition_true(self):
-        self.assertRaises(BreakRails, lambda: Result.fail().on_fail_break(True))
-        self.assertRaises(BreakRails, lambda: Result.fail().on_fail_break(lambda: True))
-        self.assertRaises(BreakRails, lambda: Result.fail().on_fail_break(lambda: Result.ok(True)))
+        self.assertRaises(BreakRailsException, lambda: Result.fail().on_fail_break(True))
+        self.assertRaises(BreakRailsException, lambda: Result.fail().on_fail_break(lambda: True))
+        self.assertRaises(BreakRailsException, lambda: Result.fail().on_fail_break(lambda: Result.ok(True)))
 
     def test_on_fail_break_use_prev_results(self):
-        self.assertRaises(BreakRails, lambda: Result.fail().on_fail_break(lambda prev_result: not prev_result.success))
+        self.assertRaises(BreakRailsException, lambda: Result.fail().on_fail_break(lambda prev_result: not prev_result.success))
 
     # endregion
 
@@ -983,21 +983,21 @@ class TestResult(unittest.TestCase):
         try:
             Result.fail().operate_when(True, lambda: 5, break_rails=True)
             self.assertTrue(False)  # should not reach here
-        except BreakRails as e:
+        except BreakRailsException as e:
             assert_result(self, e.result, success=True, value=5)
 
     def test_operate_when_break_rails_give_func_fail(self):
         try:
             Result.fail().operate_when(True, lambda: Result.fail(FAKE_ERROR), break_rails=True)
             self.assertTrue(False)  # should not reach here
-        except BreakRails as e:
+        except BreakRailsException as e:
             assert_result_with_type(self, e.result, success=False, detail_type=ErrorDetail)
 
     def test_operate_when_break_rails_give_func_raise_exception(self):
         try:
             Result.fail().operate_when(True, function_raise_exception, break_rails=True)
             self.assertTrue(False)  # should not reach here
-        except BreakRails as e:
+        except BreakRailsException as e:
             assert_result_with_type(self, e.result, success=False, detail_type=ErrorDetail)
             assert_error_detail(self, e.result.detail, title='An error occurred',
                                 message="Operation failed with 1 attempts. The details of the 1 errors are stored in "
@@ -1047,21 +1047,21 @@ class TestResult(unittest.TestCase):
     def test_break_rails_ok(self):
         # Success
         result = Result.ok(1, SuccessDetail())
-        exception = BreakRails(result)
+        exception = BreakRailsException(result)
 
-        assert_exception(self, exception, BreakRails)
+        assert_exception(self, exception, BreakRailsException)
         self.assertEqual(result, exception.result)
 
         # Failure
         result = Result.fail(ErrorDetail())
-        exception = BreakRails(result)
+        exception = BreakRailsException(result)
 
-        assert_exception(self, exception, BreakRails)
+        assert_exception(self, exception, BreakRailsException)
         self.assertEqual(result, exception.result)
 
     def test_break_rails_give_none(self):
-        self.assertRaises(ValueError, lambda: BreakRails(None))
-        self.assertRaises(ValueError, lambda: BreakRails("Not result type"))
+        self.assertRaises(ValueError, lambda: BreakRailsException(None))
+        self.assertRaises(ValueError, lambda: BreakRailsException("Not result type"))
 
     # endregion
 
@@ -1091,12 +1091,12 @@ class TestResult(unittest.TestCase):
                             exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION])
 
     def test_break_rails_with_condition_true(self):
-        self.assertRaises(BreakRails, lambda: Result.ok(1).break_rails(True))
-        self.assertRaises(BreakRails, lambda: Result.ok(1).break_rails(lambda: True))
-        self.assertRaises(BreakRails, lambda: Result.ok(1).break_rails(lambda: Result.ok(True)))
+        self.assertRaises(BreakRailsException, lambda: Result.ok(1).break_rails(True))
+        self.assertRaises(BreakRailsException, lambda: Result.ok(1).break_rails(lambda: True))
+        self.assertRaises(BreakRailsException, lambda: Result.ok(1).break_rails(lambda: Result.ok(True)))
 
     def test_break_rails_use_prev_results(self):
-        self.assertRaises(BreakRails, lambda: Result.ok(1).break_rails(lambda prev_result: prev_result.value == 1))
+        self.assertRaises(BreakRailsException, lambda: Result.ok(1).break_rails(lambda prev_result: prev_result.value == 1))
 
     # endregion
 

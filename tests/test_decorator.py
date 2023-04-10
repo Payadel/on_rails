@@ -5,7 +5,7 @@ import unittest
 from typing import Coroutine
 
 from on_rails.decorator import def_result
-from on_rails.Result import BreakRails, Result
+from on_rails.Result import BreakRailsException, Result
 from on_rails.ResultDetails.ErrorDetail import ErrorDetail
 from on_rails.ResultDetails.Errors.BadRequestError import BadRequestError
 from on_rails.ResultDetails.SuccessDetail import SuccessDetail
@@ -81,14 +81,14 @@ class TestDefResultDecorator(unittest.TestCase):
 
     def test_break_rails_with_result_ok(self):
         result_ok = Result.ok(1, SuccessDetail())
-        break_rails = BreakRails(result_ok)
+        break_rails = BreakRailsException(result_ok)
 
         result = def_result()(raise_exception)(break_rails)
         self.assertEqual(result_ok, result)
 
     def test_break_rails_with_result_fail(self):
         result_fail = Result.fail(ErrorDetail())
-        break_rails = BreakRails(result_fail)
+        break_rails = BreakRailsException(result_fail)
 
         result = def_result()(raise_exception)(break_rails)
         self.assertEqual(result_fail, result)
@@ -133,14 +133,14 @@ class TestDefResultDecoratorAsync(unittest.IsolatedAsyncioTestCase):
 
     async def test_break_rails_with_result_async(self):
         result_ok = Result.ok(1, SuccessDetail())
-        break_rails = BreakRails(result_ok)
+        break_rails = BreakRailsException(result_ok)
 
         result = await def_result(is_async=True)(raise_exception_async)(break_rails)
         self.assertEqual(result_ok, result)
 
     async def test_break_rails_with_result_fail_async(self):
         result_fail = Result.fail(ErrorDetail())
-        break_rails = BreakRails(result_fail)
+        break_rails = BreakRailsException(result_fail)
 
         result = await def_result(is_async=True)(raise_exception_async)(break_rails)
         self.assertEqual(result_fail, result)

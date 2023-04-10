@@ -622,7 +622,7 @@ class Result(Generic[T]):
             .break_rails(break_rails)
 
     def __break_rails(self):
-        raise BreakRails(result=self)
+        raise BreakRailsException(result=self)
 
     # endregion
 
@@ -668,7 +668,7 @@ def try_func(func: Callable, num_of_try: int = 1, try_only_on_exceptions: bool =
 
 
 # The class `BreakRails` defines an exception that takes a `Result` object as input.
-class BreakRails(Exception):
+class BreakRailsException(Exception):
     """
     An exception for break fast chaining of functions.
     It stores the last result.

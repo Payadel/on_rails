@@ -1,7 +1,7 @@
 from typing import Coroutine
 
 from on_rails._utility import await_func
-from on_rails.Result import BreakRails, Result
+from on_rails.Result import BreakRailsException, Result
 from on_rails.ResultDetails.Errors.ExceptionError import ExceptionError
 
 
@@ -22,7 +22,7 @@ def def_result(is_async: bool = False):
             try:
                 result = await_func(lambda: func(*args, **kwargs))
                 return Result.convert_to_result(result)
-            except BreakRails as e:
+            except BreakRailsException as e:
                 return e.result
             except Exception as e:
                 return Result.fail(detail=ExceptionError(message=str(e), exception=e))
@@ -33,7 +33,7 @@ def def_result(is_async: bool = False):
                 if isinstance(result, Coroutine):
                     result = await result
                 return Result.convert_to_result(result)
-            except BreakRails as e:
+            except BreakRailsException as e:
                 return e.result
             except Exception as e:
                 return Result.fail(detail=ExceptionError(message=str(e), exception=e))
