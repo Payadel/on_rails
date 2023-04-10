@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.1.0](https://github.com/Payadel/on_rails/compare/v3.0.0...v3.1.0) (2023-04-10)
+
+
+### Features
+
+* add test_helpers.py ([c7ab32d](https://github.com/Payadel/on_rails/commit/c7ab32d17dc8eac8a0e05e02a054f0d145c99341))
+
 ## [3.0.0](https://github.com/Payadel/on_rails/compare/v2.1.0...v3.0.0) (2023-04-10)
 
 
