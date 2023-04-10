@@ -794,6 +794,19 @@ class TestResult(unittest.TestCase):
         assert_error_detail(self, error_detail=result.detail, title="An error occurred", code=500,
                             more_data=[{'prev_detail': FAKE_ERROR}])
 
+    def test_fail_when_give_func_for_condition(self):
+        result = Result.ok(1).fail_when(lambda prev_result: prev_result.success)
+
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+
+    def test_fail_when_give_func_with_too_many_args(self):
+        result = Result.ok(1).fail_when(lambda prev_result, b: prev_result.success)
+
+        assert_result_with_type(self, result, success=False, detail_type=ValidationError)
+        assert_error_detail(self, error_detail=result.detail, title="One or more validation errors occurred",
+                            code=400, message="<lambda>() takes 2 arguments. It cannot be executed. "
+                                              "maximum of 1 parameters is acceptable.")
+
     # endregion
 
     # region convert_to_result

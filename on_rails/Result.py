@@ -459,24 +459,30 @@ class Result(Generic[T]):
 
     # endregion
 
-    def fail_when(self, condition: bool, error_detail: Optional[ErrorDetail] = None, add_prev_detail: bool = False):
+    def fail_when(self, condition_or_func: Union[Callable, bool],
+                  error_detail: Optional[ErrorDetail] = None, add_prev_detail: bool = False):
         """
         If the condition is true, return a failure result with the given error detail
 
-        :param condition: The condition to check. If it's True, the Result will be a failure
-        :type condition: bool
+        :param condition_or_func: The condition or function that needs to be checked before calling the main function. It
+        can be either a boolean value or a callable function that returns a boolean value
+        :type condition_or_func: Union[Callable, bool]
+
         :param error_detail: This is the error detail that will be returned if the condition is true
         :type error_detail: Optional[ErrorDetail]
         :param add_prev_detail: If True, the previous error detail will be added to the new error detail, defaults to False
         :type add_prev_detail: bool (optional)
         :return: Result object
         """
-        if not condition:
-            return self
 
+        return self.operate_when(condition_or_func, lambda: self.__fail_when(error_detail, add_prev_detail))
+
+    def __fail_when(self, error_detail: Optional[ErrorDetail] = None, add_prev_detail: bool = False):
         error_detail = error_detail if error_detail else ErrorDetail()
+
         if add_prev_detail and self.detail:
             error_detail.add_more_data({"prev_detail": self.detail})
+
         return Result.fail(error_detail)
 
     def operate_when(self, condition_or_func: Union[Callable, bool], func: Callable,
