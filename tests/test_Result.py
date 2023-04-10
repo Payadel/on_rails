@@ -287,6 +287,10 @@ class TestResult(unittest.TestCase):
                                     "The details of the 1 errors are stored in the more_data field. ",
                             code=500, more_data=[FAKE_ERROR])
 
+        result = Result.ok(1).on_success_add_more_data(lambda: Result.fail(FAKE_ERROR), ignore_errors=True)
+        assert_result(self, result, success=True, value=1)
+        self.assertIsNone(result.detail)
+
     # endregion
 
     # region on_success_new_detail

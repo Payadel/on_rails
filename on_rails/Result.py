@@ -125,7 +125,7 @@ class Result(Generic[T]):
         return self.__call_func(func, optional_args=[self.value, self],
                                 num_of_try=num_of_try, try_only_on_exceptions=try_only_on_exceptions)
 
-    def on_success_add_more_data(self, object_or_fuc: Union[Any, Callable]):
+    def on_success_add_more_data(self, object_or_fuc: Union[Any, Callable], ignore_errors: bool = False):
         """
         This function adds more data to a success response object.
 
@@ -134,6 +134,10 @@ class Result(Generic[T]):
         Then if operation was successful, result of function will be added to more_data field. Otherwise, the error details are returned.
         If it is an object, it will be added to the `SuccessDetail` object
         :type object_or_fuc: Any or Callable
+
+        :param ignore_errors: `ignore_error` is a boolean parameter that determines whether or not to ignore any errors that occur during the execution of the function. If `ignore_error` is set to `True`,
+        any errors that occur will be ignored. If `ignore_error` is set to False, any errors that occur during the execution of the function will be returned.
+        :type ignore_errors: bool (optional)
         """
         if not self.success or object_or_fuc is None:
             return self
@@ -141,7 +145,7 @@ class Result(Generic[T]):
         if callable(object_or_fuc):
             result = self.__call_func(object_or_fuc, optional_args=[self.value, self])
             if not result.success:
-                return result
+                return self if ignore_errors else result
             obj = result.value
         else:
             obj = object_or_fuc
@@ -150,7 +154,7 @@ class Result(Generic[T]):
             self.detail = SuccessDetail()
 
         result = try_func(lambda: self.detail.add_more_data(obj))
-        if result.success:
+        if result.success or ignore_errors:
             return self
         return result  # pragma: no cover
 
