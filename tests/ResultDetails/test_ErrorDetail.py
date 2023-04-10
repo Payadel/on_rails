@@ -8,15 +8,15 @@ class TestErrorDetail(unittest.TestCase):
     def test_init_without_args(self):
         error_detail = ErrorDetail()
 
-        assert_error_detail(test_class=self, error_detail=error_detail, title="An error occurred", code=500)
+        assert_error_detail(test_class=self, target_error_detail=error_detail, expected_title="An error occurred", expected_code=500)
 
     def test_init_with_args(self):
         exception = Exception("Fake exception")
         error_detail = ErrorDetail(title="title", message="message", code=100, errors={"message": "error"},
                                    exception=exception, more_data=["more_data"])
 
-        assert_error_detail(test_class=self, error_detail=error_detail, title="title", message="message", code=100,
-                            errors={"message": "error"}, exception=exception, more_data=["more_data"])
+        assert_error_detail(test_class=self, target_error_detail=error_detail, expected_title="title", expected_message="message", expected_code=100,
+                            expected_errors={"message": "error"}, expected_exception=exception, expected_more_data=["more_data"])
 
     def test_add_or_update_error(self):
         error_detail = ErrorDetail()

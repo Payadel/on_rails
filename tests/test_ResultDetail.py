@@ -3,20 +3,20 @@
 import unittest
 
 from on_rails.ResultDetail import ResultDetail
-from tests.helpers import assert_result_detail
+from on_rails.test_helpers import assert_result_detail
 
 
 class TestResultDetail(unittest.TestCase):
     def test_init_without_optional_args(self):
         result_detail = ResultDetail(title='title')
 
-        assert_result_detail(test_class=self, result_detail=result_detail, title='title')
+        assert_result_detail(test_class=self, target_result_detail=result_detail, expected_title='title')
 
     def test_init_with_optional_args(self):
         result_detail = ResultDetail(title='title', message='message', code=100, more_data=["more data"])
 
-        assert_result_detail(test_class=self, result_detail=result_detail, title='title', message='message', code=100,
-                             more_data=["more data"])
+        assert_result_detail(test_class=self, target_result_detail=result_detail, expected_title='title', expected_message='message', expected_code=100,
+                             expected_more_data=["more data"])
 
     def test_init_without_required_args(self):
         self.assertRaises(ValueError, ResultDetail, title=None)

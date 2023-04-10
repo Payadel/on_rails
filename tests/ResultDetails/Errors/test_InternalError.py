@@ -8,17 +8,17 @@ class TestInternalError(unittest.TestCase):
     def test_init_without_args(self):
         detail = InternalError()
 
-        assert_error_detail(test_class=self, error_detail=detail, title="Internal Error",
-                            code=500)
+        assert_error_detail(test_class=self, target_error_detail=detail, expected_title="Internal Error",
+                            expected_code=500)
 
     def test_init_with_args(self):
         exception = Exception("fake")
         detail = InternalError(title="title", message="message", code=100, more_data=["message"],
                                errors={"key": "message"}, exception=exception)
 
-        assert_error_detail(test_class=self, error_detail=detail, title="title",
-                            code=100, message="message", more_data=["message"],
-                            errors={"key": "message"}, exception=exception)
+        assert_error_detail(test_class=self, target_error_detail=detail, expected_title="title",
+                            expected_code=100, expected_message="message", expected_more_data=["message"],
+                            expected_errors={"key": "message"}, expected_exception=exception)
 
 
 if __name__ == '__main__':
