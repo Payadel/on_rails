@@ -418,6 +418,10 @@ class TestResult(unittest.TestCase):
         self.assertRaises(BreakRails, lambda: Result.ok(1).on_success_break(lambda: True))
         self.assertRaises(BreakRails, lambda: Result.ok(1).on_success_break(lambda: Result.ok(True)))
 
+    def test_on_success_break_use_prev_results(self):
+        self.assertRaises(BreakRails, lambda: Result.ok(1).on_success_break(lambda value: value == 1))
+        self.assertRaises(BreakRails, lambda: Result.ok(1).on_success_break(lambda value, prev_result: value == prev_result.value))
+
     # endregion
 
     # region on_fail
@@ -906,7 +910,7 @@ class TestResult(unittest.TestCase):
 
     # endregion
 
-    # region BreakRails
+    # region BreakRails Exception
 
     def test_break_rails_ok(self):
         # Success
@@ -926,6 +930,41 @@ class TestResult(unittest.TestCase):
     def test_break_rails_give_none(self):
         self.assertRaises(ValueError, lambda: BreakRails(None))
         self.assertRaises(ValueError, lambda: BreakRails("Not result type"))
+
+    # endregion
+
+    # region break_rails
+
+    def test_break_rails_with_condition_false(self):
+        result = Result.ok(1).break_rails(False)
+        assert_result(self, result, success=True, value=1)
+
+        result = Result.ok(1).break_rails(lambda: False)
+        assert_result(self, result, success=True, value=1)
+
+        result = Result.ok(1).break_rails(lambda: Result.ok(False))
+        assert_result(self, result, success=True, value=1)
+
+    def test_break_rails_give_func_fails(self):
+        result = Result.ok(1).break_rails(lambda: Result.fail(FAKE_ERROR))
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, title="fake", code=500)
+
+        result = Result.ok(1).break_rails(function_raise_exception)
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, title="An error occurred",
+                            message="Operation failed with 1 attempts. The details of the 1 errors are stored in the "
+                                    "more_data field. At least one of the errors was an exception type, the first "
+                                    "exception being stored in the exception field.", code=500,
+                            exception=FAKE_EXCEPTION, more_data=[FAKE_EXCEPTION])
+
+    def test_break_rails_with_condition_true(self):
+        self.assertRaises(BreakRails, lambda: Result.ok(1).break_rails(True))
+        self.assertRaises(BreakRails, lambda: Result.ok(1).break_rails(lambda: True))
+        self.assertRaises(BreakRails, lambda: Result.ok(1).break_rails(lambda: Result.ok(True)))
+
+    def test_break_rails_use_prev_results(self):
+        self.assertRaises(BreakRails, lambda: Result.ok(1).break_rails(lambda prev_result: prev_result.value == 1))
 
     # endregion
 
