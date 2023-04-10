@@ -713,7 +713,8 @@ class TestResult(unittest.TestCase):
         self.assertRaises(BreakRailsException, lambda: Result.fail().on_fail_break(lambda: Result.ok(True)))
 
     def test_on_fail_break_use_prev_results(self):
-        self.assertRaises(BreakRailsException, lambda: Result.fail().on_fail_break(lambda prev_result: not prev_result.success))
+        self.assertRaises(BreakRailsException,
+                          lambda: Result.fail().on_fail_break(lambda prev_result: not prev_result.success))
 
     # endregion
 
@@ -1096,7 +1097,8 @@ class TestResult(unittest.TestCase):
         self.assertRaises(BreakRailsException, lambda: Result.ok(1).break_rails(lambda: Result.ok(True)))
 
     def test_break_rails_use_prev_results(self):
-        self.assertRaises(BreakRailsException, lambda: Result.ok(1).break_rails(lambda prev_result: prev_result.value == 1))
+        self.assertRaises(BreakRailsException,
+                          lambda: Result.ok(1).break_rails(lambda prev_result: prev_result.value == 1))
 
     # endregion
 
