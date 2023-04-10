@@ -334,17 +334,32 @@ class Result(Generic[T]):
         result.detail.add_more_data(f"previous error: {self.detail}")  # pragma: no cover
         return result  # pragma: no cover
 
-    def on_fail_new_detail(self, new_detail: ErrorDetail):
+    def on_fail_new_detail(self, new_detail_or_func: Union[ErrorDetail, Callable]):
         """
-        This function updates the result detail with the new detail.
+        This function updates the error detail of a result object with either a new detail or the result of a callable
+        function.
 
-        :param new_detail: new_detail is a parameter of type SuccessDetail that represents the new detail information to be
-        replaced to the current object
-        :type new_detail: ErrorDetail
-        :return: Returns result with new detail
+        :param new_detail_or_func: The parameter `new_detail_or_func` can either be an instance of `ErrorDetail` or a
+        callable function that takes `previous result` as optional argument.
+        If it is a callable function, it will be called with these arguments and the result will be used as the new detail
+        :type new_detail_or_func: Union[ErrorDetail, Callable]
         """
+
         if self.success:
             return self
+
+        if callable(new_detail_or_func):
+            result = self.__call_func(new_detail_or_func, optional_args=[self])
+            if not result.success:
+                return result
+            new_detail = result.value
+        else:
+            new_detail = new_detail_or_func
+
+        if new_detail is not None and not isinstance(new_detail, ErrorDetail):
+            return Result.fail(
+                ErrorDetail(message=f"Type of new detail '{type(new_detail).__name__}' "
+                                    f"is not instance of '{ErrorDetail.__name__}'."))
         self.detail = new_detail
         return self
 
