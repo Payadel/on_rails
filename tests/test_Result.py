@@ -502,6 +502,44 @@ class TestResult(unittest.TestCase):
 
     # endregion
 
+    # region on_success_fail_when
+
+    def test_on_success_fail_when_on_fail_result(self):
+        result = Result.fail().on_success_fail_when(True, ErrorDetail())
+
+        assert_result(self, result, success=False)
+        self.assertIsNone(result.detail)
+
+    def test_on_success_fail_when_condition_is_false(self):
+        result = Result.ok(1).on_success_fail_when(False)
+
+        assert_result(self, result, success=True, value=1)
+
+    def test_on_success_fail_with_default_error_detail(self):
+        result = Result.ok(1).on_success_fail_when(True)
+
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+
+    def test_on_success_fail_when_default_custom_detail(self):
+        result = Result.ok(1).on_success_fail_when(True, BadRequestError())
+
+        assert_result_with_type(self, result, success=False, detail_type=BadRequestError)
+
+    def test_on_success_fail_when_give_func_for_condition(self):
+        result = Result.ok(1).on_success_fail_when(lambda value, prev_result: value and prev_result.success)
+
+        assert_result_with_type(self, result, success=False, detail_type=ErrorDetail)
+
+    def test_on_success_fail_when_give_func_with_too_many_args(self):
+        result = Result.ok(1).on_success_fail_when(lambda value, prev_result, b: prev_result.success)
+
+        assert_result_with_type(self, result, success=False, detail_type=ValidationError)
+        assert_error_detail(self, error_detail=result.detail, title="One or more validation errors occurred",
+                            code=400, message="<lambda>() takes 3 arguments. It cannot be executed. "
+                                              "maximum of 2 parameters is acceptable.")
+
+    # endregion
+
     # region on_fail
 
     def test_on_fail_give_invalid_func(self):

@@ -270,6 +270,21 @@ class Result(Generic[T]):
         self.__break_rails()
         return Result.fail(ErrorDetail(message="The BreakRails exception not raised."))  # pragma: no cover
 
+    def on_success_fail_when(self, condition_or_func: Union[Callable, bool],
+                             error_detail: Optional[ErrorDetail] = None):
+        """
+        If the previous result is successful and condition is true, return a failure result with the given error detail
+
+        :param condition_or_func: The condition or function that needs to be checked before calling the main function. It
+        can be either a boolean value or a callable function that returns a boolean value
+        :type condition_or_func: Union[Callable, bool]
+
+        :param error_detail: This is the error detail that will be returned if the condition is true
+        :type error_detail: Optional[ErrorDetail]
+        """
+
+        return self.on_success_operate_when(condition_or_func, lambda: self.__fail_when(error_detail))
+
     # endregion
 
     # region on_fail
