@@ -39,29 +39,29 @@ class TestUtility(unittest.TestCase):
 
     def test_generate_error_none_or_empty_errors(self):
         error_detail = generate_error(None, 2)
-        assert_error_detail(self, error_detail=error_detail, title="An error occurred", code=500,
-                            message='Operation failed with 2 attempts. There is no more information.')
+        assert_error_detail(self, target_error_detail=error_detail, expected_title="An error occurred", expected_code=500,
+                            expected_message='Operation failed with 2 attempts. There is no more information.')
 
         error_detail = generate_error([], 2)
-        assert_error_detail(self, error_detail=error_detail, title="An error occurred", code=500,
-                            message='Operation failed with 2 attempts. There is no more information.')
+        assert_error_detail(self, target_error_detail=error_detail, expected_title="An error occurred", expected_code=500,
+                            expected_message='Operation failed with 2 attempts. There is no more information.')
 
     def test_generate_error_without_exception_error(self):
         error = ErrorDetail()
         error_detail = generate_error([error], 2)
-        assert_error_detail(self, error_detail=error_detail, title="An error occurred", code=500,
-                            message='Operation failed with 2 attempts. The details of the 1 errors '
+        assert_error_detail(self, target_error_detail=error_detail, expected_title="An error occurred", expected_code=500,
+                            expected_message='Operation failed with 2 attempts. The details of the 1 errors '
                                     'are stored in the more_data field. ',
-                            more_data=[error])
+                            expected_more_data=[error])
 
     def test_generate_error_with_exception_error(self):
         exception = TypeError()
         error_detail = generate_error([exception], 2)
-        assert_error_detail(self, error_detail=error_detail, title="An error occurred", code=500,
-                            message='Operation failed with 2 attempts. The details of the 1 errors are stored in '
+        assert_error_detail(self, target_error_detail=error_detail, expected_title="An error occurred", expected_code=500,
+                            expected_message='Operation failed with 2 attempts. The details of the 1 errors are stored in '
                                     'the more_data field. At least one of the errors was an exception type, '
                                     'the first exception being stored in the exception field.',
-                            more_data=[exception], exception=exception)
+                            expected_more_data=[exception], expected_exception=exception)
 
     # endregion
 
