@@ -3,7 +3,7 @@
 import asyncio
 import unittest
 
-from on_rails.Result import BreakRailsException, Result, try_func
+from on_rails.Result import BreakRailsException, Result, try_func, _get_num_of_function_parameters
 from on_rails.ResultDetail import ResultDetail
 from on_rails.ResultDetails.ErrorDetail import ErrorDetail
 from on_rails.ResultDetails.Errors.BadRequestError import BadRequestError
@@ -154,7 +154,8 @@ class TestResult(unittest.TestCase):
     def test_on_success_give_none(self):
         func_result = Result.ok().on_success(func=None)
 
-        assert_result_with_type(test_class=self, target_result=func_result, expected_success=False, expected_detail_type=ValidationError)
+        assert_result_with_type(test_class=self, target_result=func_result, expected_success=False,
+                                expected_detail_type=ValidationError)
         assert_error_detail(test_class=self, target_error_detail=func_result.detail,
                             expected_title="One or more validation errors occurred",
                             expected_message="The input function is not valid.", expected_code=400)
@@ -210,7 +211,8 @@ class TestResult(unittest.TestCase):
         self.assertFalse(func_result.success)
         assert_error_detail(self, func_result.detail, expected_title='An error occurred',
                             expected_message="Operation failed with 2 attempts. The details of the 2 errors are stored in the more_data field. At least one of the errors was an exception type, the first exception being stored in the exception field.",
-                            expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION], expected_code=500)
+                            expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION],
+                            expected_code=500)
 
     # endregion
 
@@ -253,9 +255,10 @@ class TestResult(unittest.TestCase):
             assert_result_with_type(self, e.result, expected_success=False, expected_detail_type=ErrorDetail)
             assert_error_detail(self, e.result.detail, expected_title='An error occurred',
                                 expected_message="Operation failed with 1 attempts. The details of the 1 errors are stored in "
-                                        "the more_data field. At least one of the errors was an exception type, the "
-                                        "first exception being stored in the exception field.",
-                                expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION], expected_code=500)
+                                                 "the more_data field. At least one of the errors was an exception type, the "
+                                                 "first exception being stored in the exception field.",
+                                expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION],
+                                expected_code=500)
 
     # endregion
 
@@ -282,7 +285,8 @@ class TestResult(unittest.TestCase):
 
         new_result = result.on_success_add_more_data("Data")
 
-        assert_result_with_type(self, new_result, expected_success=True, expected_value=1, expected_detail_type=SuccessDetail)
+        assert_result_with_type(self, new_result, expected_success=True, expected_value=1,
+                                expected_detail_type=SuccessDetail)
         self.assertEqual(["Data"], new_result.detail.more_data)
 
     def test_on_success_add_more_data_with_exist_detail(self):
@@ -290,23 +294,30 @@ class TestResult(unittest.TestCase):
 
         new_result = result.on_success_add_more_data("Data2")
 
-        assert_result_with_type(self, new_result, expected_success=True, expected_value=1, expected_detail_type=SuccessDetail)
+        assert_result_with_type(self, new_result, expected_success=True, expected_value=1,
+                                expected_detail_type=SuccessDetail)
         self.assertEqual(["Data1", "Data2"], new_result.detail.more_data)
 
     def test_on_success_add_more_data_give_func_ok(self):
         result = Result.ok(1).on_success_add_more_data(lambda: 5)
-        assert_result_with_type(self, result, expected_success=True, expected_value=1, expected_detail_type=SuccessDetail)
-        assert_result_detail(test_class=self, target_result_detail=result.detail, expected_title="Operation was successful",
+        assert_result_with_type(self, result, expected_success=True, expected_value=1,
+                                expected_detail_type=SuccessDetail)
+        assert_result_detail(test_class=self, target_result_detail=result.detail,
+                             expected_title="Operation was successful",
                              expected_code=200, expected_more_data=[5])
 
         result = Result.ok(1).on_success_add_more_data(lambda value: value + 1)
-        assert_result_with_type(self, result, expected_success=True, expected_value=1, expected_detail_type=SuccessDetail)
-        assert_result_detail(test_class=self, target_result_detail=result.detail, expected_title="Operation was successful",
+        assert_result_with_type(self, result, expected_success=True, expected_value=1,
+                                expected_detail_type=SuccessDetail)
+        assert_result_detail(test_class=self, target_result_detail=result.detail,
+                             expected_title="Operation was successful",
                              expected_code=200, expected_more_data=[2])
 
         result = Result.ok(1).on_success_add_more_data(lambda value, prev_result: value + prev_result.value)
-        assert_result_with_type(self, result, expected_success=True, expected_value=1, expected_detail_type=SuccessDetail)
-        assert_result_detail(test_class=self, target_result_detail=result.detail, expected_title="Operation was successful",
+        assert_result_with_type(self, result, expected_success=True, expected_value=1,
+                                expected_detail_type=SuccessDetail)
+        assert_result_detail(test_class=self, target_result_detail=result.detail,
+                             expected_title="Operation was successful",
                              expected_code=200, expected_more_data=[2])
 
     def test_on_success_add_more_data_give_func_fail(self):
@@ -314,7 +325,7 @@ class TestResult(unittest.TestCase):
         assert_result_with_type(self, result, expected_success=False, expected_detail_type=ErrorDetail)
         assert_error_detail(self, result.detail, expected_title="An error occurred",
                             expected_message="Operation failed with 1 attempts. "
-                                    "The details of the 1 errors are stored in the more_data field. ",
+                                             "The details of the 1 errors are stored in the more_data field. ",
                             expected_code=500, expected_more_data=[FAKE_ERROR])
 
         result = Result.ok(1).on_success_add_more_data(lambda: Result.fail(FAKE_ERROR), ignore_errors=True)
@@ -357,7 +368,8 @@ class TestResult(unittest.TestCase):
     def test_on_success_new_detail_give_func_ok(self):
         result = Result.ok(1).on_success_new_detail(lambda: SuccessDetail())
 
-        assert_result_with_type(self, result, expected_success=True, expected_value=1, expected_detail_type=SuccessDetail)
+        assert_result_with_type(self, result, expected_success=True, expected_value=1,
+                                expected_detail_type=SuccessDetail)
 
     def test_on_success_new_detail_give_func_fail(self):
         result = Result.ok(1).on_success_new_detail(lambda: Result.fail())
@@ -412,9 +424,10 @@ class TestResult(unittest.TestCase):
         result = Result.ok(1, SuccessDetail()).on_success_tee(lambda a, b, c: Result.fail())
 
         assert_result_with_type(self, result, expected_success=False, expected_detail_type=ValidationError)
-        assert_error_detail(test_class=self, target_error_detail=result.detail, expected_title='One or more validation errors occurred',
+        assert_error_detail(test_class=self, target_error_detail=result.detail,
+                            expected_title='One or more validation errors occurred',
                             expected_message="<lambda>() takes 3 arguments. It cannot be executed. "
-                                    "maximum of 2 parameters is acceptable.", expected_code=400)
+                                             "maximum of 2 parameters is acceptable.", expected_code=400)
 
     # endregion
 
@@ -425,7 +438,8 @@ class TestResult(unittest.TestCase):
 
         new_result = result.on_fail_new_detail(ErrorDetail())
 
-        assert_result_with_type(self, new_result, expected_success=True, expected_value=1, expected_detail_type=SuccessDetail)
+        assert_result_with_type(self, new_result, expected_success=True, expected_value=1,
+                                expected_detail_type=SuccessDetail)
 
     def test_on_fail_new_detail(self):
         result = Result.fail(ErrorDetail())
@@ -486,8 +500,8 @@ class TestResult(unittest.TestCase):
         assert_result_with_type(self, result, expected_success=False, expected_detail_type=ErrorDetail)
         assert_error_detail(self, result.detail, expected_title="An error occurred",
                             expected_message="Operation failed with 1 attempts. The details of the 1 errors are stored in the "
-                                    "more_data field. At least one of the errors was an exception type, the first "
-                                    "exception being stored in the exception field.", expected_code=500,
+                                             "more_data field. At least one of the errors was an exception type, the first "
+                                             "exception being stored in the exception field.", expected_code=500,
                             expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION])
 
     def test_on_success_break_with_condition_true(self):
@@ -534,9 +548,10 @@ class TestResult(unittest.TestCase):
         result = Result.ok(1).on_success_fail_when(lambda value, prev_result, b: prev_result.success)
 
         assert_result_with_type(self, result, expected_success=False, expected_detail_type=ValidationError)
-        assert_error_detail(self, target_error_detail=result.detail, expected_title="One or more validation errors occurred",
+        assert_error_detail(self, target_error_detail=result.detail,
+                            expected_title="One or more validation errors occurred",
                             expected_code=400, expected_message="<lambda>() takes 3 arguments. It cannot be executed. "
-                                              "maximum of 2 parameters is acceptable.")
+                                                                "maximum of 2 parameters is acceptable.")
 
     # endregion
 
@@ -587,7 +602,8 @@ class TestResult(unittest.TestCase):
         self.assertFalse(func_result.success)
         assert_error_detail(self, func_result.detail, expected_title='An error occurred',
                             expected_message="Operation failed with 2 attempts. The details of the 2 errors are stored in the more_data field. At least one of the errors was an exception type, the first exception being stored in the exception field.",
-                            expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION], expected_code=500)
+                            expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION],
+                            expected_code=500)
 
     # endregion
 
@@ -630,9 +646,10 @@ class TestResult(unittest.TestCase):
             assert_result_with_type(self, e.result, expected_success=False, expected_detail_type=ErrorDetail)
             assert_error_detail(self, e.result.detail, expected_title='An error occurred',
                                 expected_message="Operation failed with 1 attempts. The details of the 1 errors are stored in "
-                                        "the more_data field. At least one of the errors was an exception type, the "
-                                        "first exception being stored in the exception field.",
-                                expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION], expected_code=500)
+                                                 "the more_data field. At least one of the errors was an exception type, the "
+                                                 "first exception being stored in the exception field.",
+                                expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION],
+                                expected_code=500)
 
     # endregion
 
@@ -686,7 +703,7 @@ class TestResult(unittest.TestCase):
         assert_result_with_type(self, result, expected_success=False, expected_detail_type=ErrorDetail)
         assert_error_detail(self, result.detail, expected_title="An error occurred",
                             expected_message="Operation failed with 1 attempts. "
-                                    "The details of the 1 errors are stored in the more_data field. ",
+                                             "The details of the 1 errors are stored in the more_data field. ",
                             expected_code=500, expected_more_data=[FAKE_ERROR])
 
     # endregion
@@ -710,7 +727,8 @@ class TestResult(unittest.TestCase):
         result = Result.fail().on_fail_tee(lambda: Result.fail(FAKE_ERROR))
 
         assert_result(self, result, expected_success=False, expected_detail=FAKE_ERROR)
-        assert_error_detail(test_class=self, target_error_detail=result.detail, expected_title='fake', expected_code=500)
+        assert_error_detail(test_class=self, target_error_detail=result.detail, expected_title='fake',
+                            expected_code=500)
 
     def test_on_fail_tee_fail_func_set_ignore_errors(self):
         result = Result.fail().on_fail_tee(lambda: Result.fail(FAKE_ERROR), ignore_errors=True)
@@ -787,8 +805,8 @@ class TestResult(unittest.TestCase):
         assert_result_with_type(self, result, expected_success=False, expected_detail_type=ErrorDetail)
         assert_error_detail(self, result.detail, expected_title="An error occurred",
                             expected_message="Operation failed with 1 attempts. The details of the 1 errors are stored in the "
-                                    "more_data field. At least one of the errors was an exception type, the first "
-                                    "exception being stored in the exception field.", expected_code=500,
+                                             "more_data field. At least one of the errors was an exception type, the first "
+                                             "exception being stored in the exception field.", expected_code=500,
                             expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION])
 
     def test_on_fail_break_with_condition_true(self):
@@ -822,14 +840,17 @@ class TestResult(unittest.TestCase):
     def test_fail_when_add_prev_detail(self):
         # Default
         result = Result.ok(1).fail_when(True)
-        assert_error_detail(self, target_error_detail=result.detail, expected_title="An error occurred", expected_code=500)
+        assert_error_detail(self, target_error_detail=result.detail, expected_title="An error occurred",
+                            expected_code=500)
 
         # Prev is None
         result = Result.ok(1).fail_when(True, add_prev_detail=True)
-        assert_error_detail(self, target_error_detail=result.detail, expected_title="An error occurred", expected_code=500)
+        assert_error_detail(self, target_error_detail=result.detail, expected_title="An error occurred",
+                            expected_code=500)
 
         result = Result.fail(FAKE_ERROR).fail_when(True, add_prev_detail=True)
-        assert_error_detail(self, target_error_detail=result.detail, expected_title="An error occurred", expected_code=500,
+        assert_error_detail(self, target_error_detail=result.detail, expected_title="An error occurred",
+                            expected_code=500,
                             expected_more_data=[{'prev_detail': FAKE_ERROR}])
 
     def test_fail_when_give_func_for_condition(self):
@@ -841,9 +862,10 @@ class TestResult(unittest.TestCase):
         result = Result.ok(1).fail_when(lambda prev_result, b: prev_result.success)
 
         assert_result_with_type(self, result, expected_success=False, expected_detail_type=ValidationError)
-        assert_error_detail(self, target_error_detail=result.detail, expected_title="One or more validation errors occurred",
+        assert_error_detail(self, target_error_detail=result.detail,
+                            expected_title="One or more validation errors occurred",
                             expected_code=400, expected_message="<lambda>() takes 2 arguments. It cannot be executed. "
-                                              "maximum of 1 parameters is acceptable.")
+                                                                "maximum of 1 parameters is acceptable.")
 
     # endregion
 
@@ -874,15 +896,19 @@ class TestResult(unittest.TestCase):
     def test_try_func_give_none(self):
         result = try_func(None)
 
-        assert_result_with_type(test_class=self, target_result=result, expected_success=False, expected_detail_type=ValidationError)
-        assert_error_detail(self, target_error_detail=result.detail, expected_title="One or more validation errors occurred",
+        assert_result_with_type(test_class=self, target_result=result, expected_success=False,
+                                expected_detail_type=ValidationError)
+        assert_error_detail(self, target_error_detail=result.detail,
+                            expected_title="One or more validation errors occurred",
                             expected_message="The input function is not valid.", expected_code=400)
 
     def test_try_func_give_func_with_parameters(self):
         result = try_func(lambda x: x)
 
-        assert_result_with_type(test_class=self, target_result=result, expected_success=False, expected_detail_type=ValidationError)
-        assert_error_detail(self, target_error_detail=result.detail, expected_title="One or more validation errors occurred",
+        assert_result_with_type(test_class=self, target_result=result, expected_success=False,
+                                expected_detail_type=ValidationError)
+        assert_error_detail(self, target_error_detail=result.detail,
+                            expected_title="One or more validation errors occurred",
                             expected_message='<lambda>() takes 1 arguments. It cannot be executed.', expected_code=400)
 
     def test_try_func_give_func_ok(self):
@@ -903,9 +929,10 @@ class TestResult(unittest.TestCase):
         self.assertFalse(result.success)
         assert_error_detail(self, target_error_detail=result.detail, expected_title="An error occurred",
                             expected_message='Operation failed with 2 attempts. The details of the 2 errors are stored in the '
-                                    'more_data field. At least one of the errors was an exception type, the first '
-                                    'exception being stored in the exception field.',
-                            expected_code=500, expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION])
+                                             'more_data field. At least one of the errors was an exception type, the first '
+                                             'exception being stored in the exception field.',
+                            expected_code=500, expected_exception=FAKE_EXCEPTION,
+                            expected_more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION])
 
     def test_try_func_try_only_on_exceptions(self):
         result = try_func(lambda: Result.fail(), num_of_try=2, try_only_on_exceptions=True)
@@ -914,20 +941,23 @@ class TestResult(unittest.TestCase):
         result = try_func(lambda: Result.fail(), num_of_try=2, try_only_on_exceptions=False)
         self.assertFalse(result.success)
         assert_error_detail(self, target_error_detail=result.detail, expected_title="An error occurred",
-                            expected_message='Operation failed with 2 attempts. There is no more information.', expected_code=500)
+                            expected_message='Operation failed with 2 attempts. There is no more information.',
+                            expected_code=500)
 
         result = try_func(lambda: Result.fail(FAKE_ERROR), num_of_try=2, try_only_on_exceptions=False)
         self.assertFalse(result.success)
         assert_error_detail(self, target_error_detail=result.detail, expected_title="An error occurred",
                             expected_message='Operation failed with 2 attempts. '
-                                    'The details of the 2 errors are stored in the more_data field. ',
+                                             'The details of the 2 errors are stored in the more_data field. ',
                             expected_code=500, expected_more_data=[FAKE_ERROR, FAKE_ERROR])
 
     def test_try_func_on_result_give_none(self):
         result = Result.ok().try_func(None)
 
-        assert_result_with_type(test_class=self, target_result=result, expected_success=False, expected_detail_type=ValidationError)
-        assert_error_detail(self, target_error_detail=result.detail, expected_title="One or more validation errors occurred",
+        assert_result_with_type(test_class=self, target_result=result, expected_success=False,
+                                expected_detail_type=ValidationError)
+        assert_error_detail(self, target_error_detail=result.detail,
+                            expected_title="One or more validation errors occurred",
                             expected_message='The input function is not valid.', expected_code=400)
 
     def test_try_func_without_parameters_on_success_result(self):
@@ -941,7 +971,8 @@ class TestResult(unittest.TestCase):
         self.assertFalse(result.success)
         assert_error_detail(self, target_error_detail=result.detail, expected_title="An error occurred",
                             expected_message='Operation failed with 2 attempts. The details of the 2 errors are stored in the more_data field. At least one of the errors was an exception type, the first exception being stored in the exception field.',
-                            expected_code=500, expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION])
+                            expected_code=500, expected_exception=FAKE_EXCEPTION,
+                            expected_more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION])
 
     def test_try_func_without_parameters_try_only_on_exceptions(self):
         result = Result.ok().try_func(lambda: Result.fail(), num_of_try=2, try_only_on_exceptions=True)
@@ -955,17 +986,19 @@ class TestResult(unittest.TestCase):
         result = Result.ok().try_func(lambda: Result.fail(FAKE_ERROR), num_of_try=2, try_only_on_exceptions=False)
         assert_error_detail(self, target_error_detail=result.detail, expected_title="An error occurred",
                             expected_message='Operation failed with 2 attempts. '
-                                    'The details of the 2 errors are stored in the more_data field. ',
+                                             'The details of the 2 errors are stored in the more_data field. ',
                             expected_code=500, expected_more_data=[FAKE_ERROR, FAKE_ERROR])
 
     def test_try_func_without_parameters_on_failed_result(self):
         result = Result.fail().try_func(lambda: 5)
 
-        assert_result_with_type(test_class=self, target_result=result, expected_success=False, expected_detail_type=ValidationError)
-        assert_error_detail(self, target_error_detail=result.detail, expected_title="One or more validation errors occurred",
+        assert_result_with_type(test_class=self, target_result=result, expected_success=False,
+                                expected_detail_type=ValidationError)
+        assert_error_detail(self, target_error_detail=result.detail,
+                            expected_title="One or more validation errors occurred",
                             expected_message="The previous function failed. "
-                                    "The new function does not have a parameter to get the previous result. "
-                                    "Either define a function that accepts a parameter or set skip_previous_error to True.",
+                                             "The new function does not have a parameter to get the previous result. "
+                                             "Either define a function that accepts a parameter or set skip_previous_error to True.",
                             expected_code=400)
 
     def test_try_func_without_parameters_on_failed_result_with_skip_previous_error(self):
@@ -985,7 +1018,7 @@ class TestResult(unittest.TestCase):
         result = Result.ok().try_func(lambda x: Result.fail(FAKE_ERROR), num_of_try=2, try_only_on_exceptions=False)
         assert_error_detail(self, target_error_detail=result.detail, expected_title="An error occurred",
                             expected_message='Operation failed with 2 attempts. '
-                                    'The details of the 2 errors are stored in the more_data field. ',
+                                             'The details of the 2 errors are stored in the more_data field. ',
                             expected_code=500, expected_more_data=[FAKE_ERROR, FAKE_ERROR])
 
     def test_try_func_use_prev_result_ok(self):
@@ -1003,20 +1036,24 @@ class TestResult(unittest.TestCase):
         self.assertFalse(func_result.success)
         assert_error_detail(self, target_error_detail=func_result.detail, expected_title="An error occurred",
                             expected_message='Operation failed with 2 attempts. The details of the 2 errors are stored in the more_data field. At least one of the errors was an exception type, the first exception being stored in the exception field.',
-                            expected_code=500, expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION])
+                            expected_code=500, expected_exception=FAKE_EXCEPTION,
+                            expected_more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION])
 
         result = Result.ok(5)
         func_result = result.try_func(lambda prev: function_raise_exception(), num_of_try=2)
         self.assertFalse(func_result.success)
         assert_error_detail(self, target_error_detail=func_result.detail, expected_title="An error occurred",
                             expected_message='Operation failed with 2 attempts. The details of the 2 errors are stored in the more_data field. At least one of the errors was an exception type, the first exception being stored in the exception field.',
-                            expected_code=500, expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION])
+                            expected_code=500, expected_exception=FAKE_EXCEPTION,
+                            expected_more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION])
 
     def test_try_func_give_invalid_func(self):
         result = Result.ok().try_func(lambda x, y: x)
 
-        assert_result_with_type(test_class=self, target_result=result, expected_success=False, expected_detail_type=ValidationError)
-        assert_error_detail(self, target_error_detail=result.detail, expected_title="One or more validation errors occurred",
+        assert_result_with_type(test_class=self, target_result=result, expected_success=False,
+                                expected_detail_type=ValidationError)
+        assert_error_detail(self, target_error_detail=result.detail,
+                            expected_title="One or more validation errors occurred",
                             expected_message='<lambda>() takes 2 arguments. It cannot be executed.', expected_code=400)
 
     # endregion
@@ -1060,18 +1097,22 @@ class TestResult(unittest.TestCase):
     def test_operate_when_give_func_with_too_many_args(self):
         result = Result.ok(1).operate_when(lambda a, b: True, lambda: Result.fail())
 
-        assert_result_with_type(test_class=self, target_result=result, expected_success=False, expected_detail_type=ValidationError)
-        assert_error_detail(self, target_error_detail=result.detail, expected_title="One or more validation errors occurred",
+        assert_result_with_type(test_class=self, target_result=result, expected_success=False,
+                                expected_detail_type=ValidationError)
+        assert_error_detail(self, target_error_detail=result.detail,
+                            expected_title="One or more validation errors occurred",
                             expected_message='<lambda>() takes 2 arguments. It cannot be executed. '
-                                    'maximum of 1 parameters is acceptable.', expected_code=400)
+                                             'maximum of 1 parameters is acceptable.', expected_code=400)
 
     def test_operate_when_give_invalid_condition_type(self):
         result = Result.ok(1).operate_when("This is not boolean or function", lambda: Result.fail())
 
-        assert_result_with_type(test_class=self, target_result=result, expected_success=False, expected_detail_type=ValidationError)
-        assert_error_detail(self, target_error_detail=result.detail, expected_title="One or more validation errors occurred",
+        assert_result_with_type(test_class=self, target_result=result, expected_success=False,
+                                expected_detail_type=ValidationError)
+        assert_error_detail(self, target_error_detail=result.detail,
+                            expected_title="One or more validation errors occurred",
                             expected_message='The condition only can be a function or a boolean. '
-                                    'str is not acceptable.', expected_code=400)
+                                             'str is not acceptable.', expected_code=400)
 
     def test_operate_when_break_rails_with_condition_false(self):
         result = Result.fail().operate_when(False, lambda: 5, break_rails=True)
@@ -1099,9 +1140,10 @@ class TestResult(unittest.TestCase):
             assert_result_with_type(self, e.result, expected_success=False, expected_detail_type=ErrorDetail)
             assert_error_detail(self, e.result.detail, expected_title='An error occurred',
                                 expected_message="Operation failed with 1 attempts. The details of the 1 errors are stored in "
-                                        "the more_data field. At least one of the errors was an exception type, the "
-                                        "first exception being stored in the exception field.",
-                                expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION], expected_code=500)
+                                                 "the more_data field. At least one of the errors was an exception type, the "
+                                                 "first exception being stored in the exception field.",
+                                expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION],
+                                expected_code=500)
 
     # endregion
 
@@ -1131,12 +1173,14 @@ class TestResult(unittest.TestCase):
     def test_finally_tee_use_prev_result_fail(self):
         result = Result.ok(1).finally_tee(lambda prev_result: Result.fail(ErrorDetail(message=f"{prev_result.value}")))
         assert_result_with_type(self, result, expected_success=False, expected_detail_type=ErrorDetail)
-        assert_error_detail(self, target_error_detail=result.detail, expected_title="An error occurred", expected_message="1", expected_code=500)
+        assert_error_detail(self, target_error_detail=result.detail, expected_title="An error occurred",
+                            expected_message="1", expected_code=500)
 
         result = Result.fail().finally_tee(
             lambda prev_result: Result.fail(ErrorDetail(message=f"{prev_result.success}")))
         assert_result_with_type(self, result, expected_success=False, expected_detail_type=ErrorDetail)
-        assert_error_detail(self, target_error_detail=result.detail, expected_title="An error occurred", expected_message="False", expected_code=500)
+        assert_error_detail(self, target_error_detail=result.detail, expected_title="An error occurred",
+                            expected_message="False", expected_code=500)
 
     # endregion
 
@@ -1184,8 +1228,8 @@ class TestResult(unittest.TestCase):
         assert_result_with_type(self, result, expected_success=False, expected_detail_type=ErrorDetail)
         assert_error_detail(self, result.detail, expected_title="An error occurred",
                             expected_message="Operation failed with 1 attempts. The details of the 1 errors are stored in the "
-                                    "more_data field. At least one of the errors was an exception type, the first "
-                                    "exception being stored in the exception field.", expected_code=500,
+                                             "more_data field. At least one of the errors was an exception type, the first "
+                                             "exception being stored in the exception field.", expected_code=500,
                             expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION])
 
     def test_break_rails_with_condition_true(self):
@@ -1196,6 +1240,38 @@ class TestResult(unittest.TestCase):
     def test_break_rails_use_prev_results(self):
         self.assertRaises(BreakRailsException,
                           lambda: Result.ok(1).break_rails(lambda prev_result: prev_result.value == 1))
+
+    # endregion
+
+    # region get_num_of_function_parameters
+
+    def test_get_num_of_function_parameters_normal_functions(self):
+        result = _get_num_of_function_parameters(lambda: 5)
+        assert_result(self, result, expected_success=True, expected_value=0)
+
+        result = _get_num_of_function_parameters(function_raise_exception)
+        assert_result(self, result, expected_success=True, expected_value=0)
+
+        result = _get_num_of_function_parameters(lambda x: 5)
+        assert_result(self, result, expected_success=True, expected_value=1)
+
+        def function_with_parameters(a: int, b: int = 2):
+            pass
+
+        result = _get_num_of_function_parameters(function_with_parameters)
+        assert_result(self, result, expected_success=True, expected_value=2)
+
+    def test_get_num_of_function_parameters_supported_builtin_functions(self):
+        result = _get_num_of_function_parameters(sum)
+        assert_result(self, result, expected_success=True, expected_value=2)
+
+    def test_get_num_of_function_parameters_unsupported_builtin_functions(self):
+        result = _get_num_of_function_parameters(print)
+        assert_result_with_type(self, result, expected_success=False, expected_detail_type=ErrorDetail)
+        assert_error_detail(self, result, expected_title="Function Parameter Detection Error",
+                            expected_message="Can not recognize the number of function (print) parameters. "
+                                             "You can wrap your built-in function with a python "
+                                             "function like `lambda`.", expected_code=400)
 
     # endregion
 

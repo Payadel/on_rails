@@ -1,7 +1,7 @@
 from typing import Any, Callable, Generic, List, Optional, TypeVar, Union
 
 from on_rails._utility import (await_func, generate_error,
-                               get_num_of_function_parameters, is_func_valid)
+                               is_func_valid, get_num_of_function_parameters)
 from on_rails.ResultDetail import ResultDetail
 from on_rails.ResultDetails.ErrorDetail import ErrorDetail
 from on_rails.ResultDetails.Errors.ValidationError import ValidationError
@@ -560,7 +560,10 @@ class Result(Generic[T]):
         if not is_func_valid(func):
             return Result.fail(ValidationError(message="The input function is not valid."))
 
-        num_of_function_params = get_num_of_function_parameters(func)
+        result = _get_num_of_function_parameters(func)
+        if not result.success:
+            return result
+        num_of_function_params = result.value
 
         if num_of_function_params == 0:
             if self.success or ignore_previous_error:
@@ -629,7 +632,12 @@ class Result(Generic[T]):
             return Result.fail(ValidationError(message="The input function is not valid."))
 
         optional_args = optional_args if optional_args else []
-        num_of_function_params = get_num_of_function_parameters(func)
+
+        result = _get_num_of_function_parameters(func)
+        if not result.success:
+            return result
+        num_of_function_params = result.value
+
         if num_of_function_params > len(optional_args):
             return Result.fail(ValidationError(
                 message=f"{func.__name__}() takes {num_of_function_params} arguments. It cannot be executed. "
@@ -698,7 +706,11 @@ def try_func(func: Callable, num_of_try: int = 1, try_only_on_exceptions: bool =
     if not is_func_valid(func):
         return Result.fail(ValidationError(message="The input function is not valid."))
 
-    num_of_function_params = get_num_of_function_parameters(func)
+    result = _get_num_of_function_parameters(func)
+    if not result.success:
+        return result
+    num_of_function_params = result.value
+
     if num_of_function_params > 0:
         return Result.fail(ValidationError(
             message=f"{func.__name__}() takes {num_of_function_params} arguments. It cannot be executed."))
@@ -717,6 +729,16 @@ def try_func(func: Callable, num_of_try: int = 1, try_only_on_exceptions: bool =
 
     error_detail = generate_error(errors, num_of_try)
     return Result.fail(error_detail)
+
+
+def _get_num_of_function_parameters(func: Callable):
+    try:
+        return Result.ok(get_num_of_function_parameters(func))
+    except Exception:
+        return Result.fail(ErrorDetail(title="Function Parameter Detection Error",
+                                       message=f"Can not recognize the number of function ({type(func).__name__}) "
+                                               f"parameters. You can wrap your built-in function with a python "
+                                               f"function like `lambda`.", code=400))
 
 
 # The class `BreakRails` defines an exception that takes a `Result` object as input.
