@@ -3,7 +3,8 @@
 import asyncio
 import unittest
 
-from on_rails.Result import BreakRailsException, Result, try_func, _get_num_of_function_parameters
+from on_rails.Result import (BreakRailsException, Result,
+                             _get_num_of_function_parameters, try_func)
 from on_rails.ResultDetail import ResultDetail
 from on_rails.ResultDetails.ErrorDetail import ErrorDetail
 from on_rails.ResultDetails.Errors.BadRequestError import BadRequestError
@@ -1268,7 +1269,7 @@ class TestResult(unittest.TestCase):
     def test_get_num_of_function_parameters_unsupported_builtin_functions(self):
         result = _get_num_of_function_parameters(print)
         assert_result_with_type(self, result, expected_success=False, expected_detail_type=ErrorDetail)
-        assert_error_detail(self, result, expected_title="Function Parameter Detection Error",
+        assert_error_detail(self, result.detail, expected_title="Function Parameter Detection Error",
                             expected_message="Can not recognize the number of function (print) parameters. "
                                              "You can wrap your built-in function with a python "
                                              "function like `lambda`.", expected_code=400)
