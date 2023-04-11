@@ -137,7 +137,7 @@ def assert_error_detail(test_class: unittest.TestCase, target_error_detail: Erro
     if expected_more_data is None:
         expected_more_data = []
     test_class.assertTrue(isinstance(target_error_detail, ErrorDetail),
-                          msg="Target must be an instance of ErrorDetail")
+                          msg=f"Target ({type(target_error_detail).__name__}) must be an instance of ErrorDetail")
     assert_result_detail(test_class=test_class, target_result_detail=target_error_detail,
                          expected_title=expected_title, expected_message=expected_message, expected_code=expected_code,
                          expected_more_data=expected_more_data)
