@@ -710,6 +710,15 @@ class TestResult(unittest.TestCase):
                                 expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION],
                                 expected_code=500)
 
+    def test_on_fail_operate_when_give_func_returns_none(self):
+        result = Result.fail(ErrorDetail()).on_fail_operate_when(True, lambda: None)
+        assert_result(self, result, expected_success=False)
+        self.assertIsNone(result.detail)
+
+        result = Result.fail(ErrorDetail()).on_fail_operate_when(True, lambda x: None)
+        assert_result(self, result, expected_success=False)
+        self.assertIsNone(result.detail)
+
     # endregion
 
     # region on_fail_add_more_data

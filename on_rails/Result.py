@@ -464,8 +464,8 @@ class Result(Generic[T]):
 
         if self.success:
             return self
-        return self.__operate_when(condition_or_func, func, [self],
-                                   num_of_try, try_only_on_exceptions, break_rails)
+        return self.__operate_when(condition_or_func, func, [self], num_of_try,
+                                   try_only_on_exceptions, break_rails, none_means_success=False)
 
     def on_fail_break(self, condition_or_func: Union[Callable, bool]):
         """
@@ -652,7 +652,7 @@ class Result(Generic[T]):
 
     @staticmethod
     def __call_func(func: callable, optional_args: List[Any] = None,
-                    num_of_try: int = 1, try_only_on_exceptions: bool = False):
+                    num_of_try: int = 1, try_only_on_exceptions: bool = False, none_means_success: bool = True):
         if not is_func_valid(func):
             return Result.fail(ValidationError(message="The input function is not valid."))
 
@@ -668,7 +668,8 @@ class Result(Generic[T]):
                 message=f"{func.__name__}() takes {num_of_function_params} arguments. It cannot be executed. "
                         f"maximum of {len(optional_args)} parameters is acceptable."))
 
-        return try_func(lambda: func(*optional_args[:num_of_function_params]), num_of_try, try_only_on_exceptions)
+        return try_func(lambda: func(*optional_args[:num_of_function_params]),
+                        num_of_try, try_only_on_exceptions, none_means_success=none_means_success)
 
     def __is_condition_pass(self, condition_or_func: Union[Callable, bool],
                             optional_args: List[Any] = None,
@@ -697,13 +698,15 @@ class Result(Generic[T]):
 
     def __operate_when(self, condition_or_func: Union[Callable, bool],
                        func: Callable, optional_args: List[Any] = None,
-                       num_of_try: int = 1, try_only_on_exceptions=True, break_rails: bool = False):
+                       num_of_try: int = 1, try_only_on_exceptions=True, break_rails: bool = False,
+                       none_means_success: bool = True):
         result = self.__is_condition_pass(condition_or_func, optional_args, num_of_try, try_only_on_exceptions)
         if not result.success:
             return result  # Return error result
         if not result.value:  # The condition is not true
             return self
-        return self.__call_func(func, optional_args, num_of_try, try_only_on_exceptions) \
+        return self.__call_func(func, optional_args, num_of_try,
+                                try_only_on_exceptions, none_means_success=none_means_success) \
             .break_rails(break_rails)
 
     def __break_rails(self):
