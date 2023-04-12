@@ -533,7 +533,7 @@ class TestResult(unittest.TestCase):
 
     # endregion
 
-    # region on_success_break
+    # region on_success_break_rails
 
     def test_on_success_break_rails_on_fail_result(self):
         result = Result.fail().on_success_break_rails(True)
@@ -573,6 +573,49 @@ class TestResult(unittest.TestCase):
         self.assertRaises(BreakRailsException, lambda: Result.ok(1).on_success_break_rails(lambda value: value == 1))
         self.assertRaises(BreakRailsException,
                           lambda: Result.ok(1).on_success_break_rails(lambda value, prev_result: value == prev_result.value))
+
+    # endregion
+
+    # region on_success_break_function
+
+    def test_on_success_break_function_on_fail_result(self):
+        result = Result.fail().on_success_break_function(True)
+
+        assert_result(self, result, expected_success=False)
+
+    def test_on_success_break_function_with_condition_false(self):
+        result = Result.ok(1).on_success_break_function(False)
+        assert_result(self, result, expected_success=True, expected_value=1)
+
+        result = Result.ok(1).on_success_break_function(lambda: False)
+        assert_result(self, result, expected_success=True, expected_value=1)
+
+        result = Result.ok(1).on_success_break_function(lambda: Result.ok(False))
+        assert_result(self, result, expected_success=True, expected_value=1)
+
+    def test_on_success_break_function_give_func_fails(self):
+        result = Result.ok(1).on_success_break_function(lambda: Result.fail(FAKE_ERROR))
+        assert_result_with_type(self, result, expected_success=False, expected_detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, expected_title="fake", expected_code=500)
+
+        result = Result.ok(1).on_success_break_function(function_raise_exception)
+        assert_result_with_type(self, result, expected_success=False, expected_detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, expected_title="An error occurred",
+                            expected_message="Operation failed with 1 attempts. The details of the 1 errors are stored in the "
+                                             "more_data field. At least one of the errors was an exception type, the first "
+                                             "exception being stored in the exception field.", expected_code=500,
+                            expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION])
+
+    def test_on_success_break_function_with_condition_true(self):
+        self.assertRaises(BreakFunctionException, lambda: Result.ok(1).on_success_break_function())  # Default is true
+        self.assertRaises(BreakFunctionException, lambda: Result.ok(1).on_success_break_function(True))
+        self.assertRaises(BreakFunctionException, lambda: Result.ok(1).on_success_break_function(lambda: True))
+        self.assertRaises(BreakFunctionException, lambda: Result.ok(1).on_success_break_function(lambda: Result.ok(True)))
+
+    def test_on_success_break_function_use_prev_results(self):
+        self.assertRaises(BreakFunctionException, lambda: Result.ok(1).on_success_break_function(lambda value: value == 1))
+        self.assertRaises(BreakFunctionException,
+                          lambda: Result.ok(1).on_success_break_function(lambda value, prev_result: value == prev_result.value))
 
     # endregion
 

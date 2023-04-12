@@ -271,7 +271,7 @@ class Result(Generic[T]):
         :return: If `condition_or_func` is callable function and fails, it returns error result.
         Otherwise, raise BreakRails exception
 
-        :raise BreakRails
+        :raise BreakRailsException
         """
 
         if not self.success:
@@ -284,7 +284,36 @@ class Result(Generic[T]):
             return self
 
         self.__break_rails()
-        return Result.fail(ErrorDetail(message="The BreakRails exception not raised."))  # pragma: no cover
+        return Result.fail(ErrorDetail(message="The BreakRailsException not raised."))  # pragma: no cover
+
+    def on_success_break_function(self, condition_or_func: Union[Callable, bool] = True):
+        """
+        The function raises a BreakFunctionException if a given condition is true.
+        The BreakFunctionException breaks all chaining functions and can catch by
+        @def_result decorator or functions that supports `try_func` like on_success, etc
+
+        :param condition_or_func: The parameter `condition_or_func` can be either a callable function or a boolean value.
+        It is used to determine whether to break chaining of functions or not. If it is a callable function, it
+        will be called with two optional arguments: the value and the result of the previous operation.
+        :type condition_or_func: Union[Callable, bool]
+
+        :return: If `condition_or_func` is callable function and fails, it returns error result.
+        Otherwise, raise BreakRails exception
+
+        :raise BreakFunctionException
+        """
+
+        if not self.success:
+            return self
+
+        result = self.__is_condition_pass(condition_or_func, [self.value, self])
+        if not result.success:
+            return result  # return error result
+        if not result.value:  # The condition is not true
+            return self
+
+        self.__break_function()
+        return Result.fail(ErrorDetail(message="The BreakFunctionException not raised."))  # pragma: no cover
 
     def on_success_fail_when(self, condition_or_func: Union[Callable, bool],
                              error_detail: Optional[ErrorDetail] = None):
