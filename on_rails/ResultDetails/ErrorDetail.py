@@ -38,7 +38,16 @@ class ErrorDetail(ResultDetail):
 
         if self.errors is not None:
             error_details += "Errors: " + str(self.errors) + "\n"
+        if self.exception:
+            error_details += "Exception: " + str(self.exception) + "\n"
 
+        return error_details
+
+    def __repr__(self):
+        error_details = super().__str__()
+
+        if self.errors is not None:
+            error_details += "Errors: " + str(self.errors) + "\n"
         if self.exception:
             error_details += "Exception: " + str(self.exception) + "\n"
         error_details += "Stack trace: " + ''.join(self.stack_trace.format()) + "\n"
