@@ -2,6 +2,49 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.0](https://github.com/Payadel/on_rails/compare/v3.1.0...v4.0.0) (2023-04-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* rename `on_fail_break` to `on_fail_break_rails`
+* rename `on_success_break` to `on_success_break_rails`
+* if result of `func` in `on_fail_operate_when` be None, we consider it fail result
+* if result of `func` in `on_fail` be None, we consider it fail result
+* remove stack trace from `ErrorDetail.__str__`
+* previously, `def_result` return errors with `ExceptionError`, but now return `ErrorDetail` type like `try_func` functions.
+* support `BreakRailsException` in `try_func`s
+
+### Features
+
+* add `BreakFunctionException` to break function ([0fa05c1](https://github.com/Payadel/on_rails/commit/0fa05c147de239ef9f52c24ac4ff741bd54cdee3))
+* add `on_fail_break_function` ([11c4b78](https://github.com/Payadel/on_rails/commit/11c4b785b93c898b79e1a974880fb9e7bb37578f))
+* add `on_success_break_function` ([c34fd73](https://github.com/Payadel/on_rails/commit/c34fd73fa6281a9874f6b1e699a5fa93c273d807))
+* add `Result.__repr__` ([05eb405](https://github.com/Payadel/on_rails/commit/05eb405eddea4e87303564b09227d2041fc1343f))
+* add assert for target inputs in `test_helpers.py` ([4b5bf54](https://github.com/Payadel/on_rails/commit/4b5bf54f2ca5e35b417d37f31a42b8fd5529c58d))
+
+
+### Fixes
+
+* fix `get_num_of_function_parameters` error for some builtin functions ([0330f9e](https://github.com/Payadel/on_rails/commit/0330f9edd362c1e572b151830a09b3cd2362c8d8))
+* if result of `func` in `on_fail_operate_when` be None, we consider it fail result ([e50622b](https://github.com/Payadel/on_rails/commit/e50622bd05f4311e3108fa411065e72b820647db))
+* if result of `func` in `on_fail` be None, we consider it fail result ([8220aee](https://github.com/Payadel/on_rails/commit/8220aee1227e7a329d55ca9c4126874e261065cc))
+* improve assert message in `assert_error_detail` ([28e1b5d](https://github.com/Payadel/on_rails/commit/28e1b5df52eadbb884d18f3476657b4b967bf637))
+* refactor `decorator`: use `try_func`s ([678ee6e](https://github.com/Payadel/on_rails/commit/678ee6e7b5246ba371fae4127437e96457acfe94))
+* remove stack trace from `ErrorDetail.__str__` ([974fb6f](https://github.com/Payadel/on_rails/commit/974fb6f38ed841e64f928dffdee8319d6989bd6c))
+* rename `on_fail_break` to `on_fail_break_rails` ([2022c1e](https://github.com/Payadel/on_rails/commit/2022c1e538b17b69800fd176c75d4fa852b1e18f))
+* rename `on_success_break` to `on_success_break_rails` ([d5d1fc7](https://github.com/Payadel/on_rails/commit/d5d1fc73bee6e8069fcca38e193b28c38830a323))
+* support `BreakRailsException` in `try_func`s ([acba739](https://github.com/Payadel/on_rails/commit/acba739527b008662c6e15fc1da0e3bd50a710ff))
+* the condition of `break rails` functions is set to `True` by default ([271a43a](https://github.com/Payadel/on_rails/commit/271a43ae76f0462ed0d118def7c42c45acce4f15))
+
+
+### Tests
+
+* add test for `Result.__repr__` ([a5a9f8c](https://github.com/Payadel/on_rails/commit/a5a9f8c549a500e9016d17f86846b1f4622259ff))
+* fix `test_get_num_of_function_parameters_unsupported_builtin_functions` ([544c3b7](https://github.com/Payadel/on_rails/commit/544c3b753659e6681f34d04471e6207337c0611c))
+* full coverage `Result.py` ([39d885c](https://github.com/Payadel/on_rails/commit/39d885c9554f5d4a62c001b5df19a1d5faaf905f))
+* test for `ErrorDetail.__repr_` ([60799cc](https://github.com/Payadel/on_rails/commit/60799cc53daab1e2b5720847d50eae2bd615ef7f))
+
 ## [3.1.0](https://github.com/Payadel/on_rails/compare/v3.0.0...v3.1.0) (2023-04-10)
 
 
