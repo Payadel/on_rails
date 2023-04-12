@@ -683,12 +683,20 @@ class TestResult(unittest.TestCase):
 
         assert_result(self, func_result, expected_success=True, expected_value=5)
 
-    def test_on_fail_with_None_result(self):
+    def test_on_fail_give_func_returns_none(self):
+        # Default of none_means_success is false
         result = Result.fail().on_fail(lambda: None)
         assert_result(self, result, expected_success=False)
 
         result = Result.fail().on_fail(lambda x: None)
         assert_result(self, result, expected_success=False)
+
+        # Set none_means_success to true
+        result = Result.fail().on_fail(lambda: None, none_means_success=True)
+        assert_result(self, result, expected_success=True)
+
+        result = Result.fail().on_fail(lambda x: None, none_means_success=True)
+        assert_result(self, result, expected_success=True)
 
     def test_on_fail_use_prev_result(self):
         result = Result.fail()
@@ -847,6 +855,13 @@ class TestResult(unittest.TestCase):
 
         assert_result(self, result, expected_success=False)
         self.assertIsNone(result.detail)
+
+    def test_on_fail_tee_give_func_returns_none(self):
+        fail_result = Result.fail(ErrorDetail())
+        result = fail_result.on_fail_tee(lambda: None)
+
+        self.assertEqual(fail_result, result)
+        self.assertIsNotNone(result.detail)
 
     # endregion
 

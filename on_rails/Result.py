@@ -334,7 +334,7 @@ class Result(Generic[T]):
 
     # region on_fail
 
-    def on_fail(self, func: Callable, num_of_try: int = 1, try_only_on_exceptions=True):
+    def on_fail(self, func: Callable, num_of_try: int = 1, try_only_on_exceptions=True, none_means_success: bool = False):
         """
         If the result is not successful, call the function with the given arguments
 
@@ -349,6 +349,11 @@ class Result(Generic[T]):
         function will be retried regardless of whether an exception is raised or Result is not success, defaults to True
         :type try_only_on_exceptions: bool (optional)
 
+        :param none_means_success: A boolean parameter that determines whether a `None` output should be considered a
+        success or a failure. If `none_means_success` is `True`, then a `None` output will be considered a success and the
+        function will return a `Result.ok()` instance. If `none_means_success` is, defaults to True
+        :type none_means_success: bool (optional)
+
         :return: The result object is being returned.
         """
 
@@ -357,7 +362,7 @@ class Result(Generic[T]):
         if self.success:
             return self
         return self.try_func(func, num_of_try, ignore_previous_error=True,
-                             try_only_on_exceptions=try_only_on_exceptions, none_means_success=False)
+                             try_only_on_exceptions=try_only_on_exceptions, none_means_success=none_means_success)
 
     def on_fail_add_more_data(self, object_or_func: Union[Any, Callable], ignore_errors: bool = False):
         """
@@ -443,7 +448,8 @@ class Result(Generic[T]):
         :param ignore_errors: If it is false, it will return the error result when the result of the function fails, otherwise it will be ignored.
         :return: an instance of the class that it belongs to (presumably named `self`).
         """
-        result = self.on_fail(func, num_of_try, try_only_on_exceptions)
+
+        result = self.on_fail(func, num_of_try, try_only_on_exceptions, none_means_success=True)
         if result.success or ignore_errors:
             return self  # ignore result
         return result
