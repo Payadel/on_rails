@@ -1,4 +1,4 @@
-from on_rails.Result import try_func, try_func_async
+from on_rails.Result import BreakFunctionException, try_func, try_func_async
 
 
 def def_result(is_async: bool = False, num_of_try: int = 1, try_only_on_exceptions: bool = True):
@@ -23,12 +23,18 @@ def def_result(is_async: bool = False, num_of_try: int = 1, try_only_on_exceptio
 
     def inner_decorator(func: callable):
         def wrapper(*args, **kwargs):
-            return try_func(lambda: func(*args, **kwargs),
-                            num_of_try=num_of_try, try_only_on_exceptions=try_only_on_exceptions)
+            try:
+                return try_func(lambda: func(*args, **kwargs),
+                                num_of_try=num_of_try, try_only_on_exceptions=try_only_on_exceptions)
+            except BreakFunctionException as e:
+                return e.result
 
         async def wrapper_async(*args, **kwargs):
-            return await try_func_async(lambda: func(*args, **kwargs),
-                                        num_of_try=num_of_try, try_only_on_exceptions=try_only_on_exceptions)
+            try:
+                return await try_func_async(lambda: func(*args, **kwargs),
+                                            num_of_try=num_of_try, try_only_on_exceptions=try_only_on_exceptions)
+            except BreakFunctionException as e:
+                return e.result
 
         return wrapper_async if is_async else wrapper
 

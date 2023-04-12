@@ -4,8 +4,8 @@ import asyncio
 import unittest
 from typing import Optional
 
-from on_rails.Result import (BreakRailsException, Result,
-                             _get_num_of_function_parameters, try_func,
+from on_rails.Result import (BreakFunctionException, BreakRailsException,
+                             Result, _get_num_of_function_parameters, try_func,
                              try_func_async)
 from on_rails.ResultDetail import ResultDetail
 from on_rails.ResultDetails.ErrorDetail import ErrorDetail
@@ -1021,6 +1021,30 @@ class TestResult(unittest.TestCase):
                                              'The details of the 2 errors are stored in the more_data field. ',
                             expected_code=500, expected_more_data=[FAKE_ERROR, FAKE_ERROR])
 
+    def test_try_func_give_builtin_functions(self):
+        # The sum is supported builtin function
+        result = try_func(sum)
+        assert_result_with_type(test_class=self, target_result=result, expected_success=False,
+                                expected_detail_type=ValidationError)
+        assert_error_detail(self, target_error_detail=result.detail,
+                            expected_title="One or more validation errors occurred",
+                            expected_message='sum() takes 2 arguments. It cannot be executed.',
+                            expected_code=400)
+
+        # The print is not supported function
+        result = try_func(print)
+        assert_result_with_type(test_class=self, target_result=result, expected_success=False,
+                                expected_detail_type=ErrorDetail)
+        assert_error_detail(self, target_error_detail=result.detail,
+                            expected_title="Function Parameter Detection Error",
+                            expected_message='Can not recognize the number of function (print) parameters. '
+                                             'You can wrap your built-in function with a python function like `lambda`.'
+                            , expected_code=400)
+
+    # endregion
+
+    # region try_func on result
+
     def test_try_func_on_result_give_none(self):
         result = Result.ok().try_func(None)
 
@@ -1035,7 +1059,7 @@ class TestResult(unittest.TestCase):
 
         assert_result(self, result, expected_success=True, expected_value=5)
 
-    def test_try_func_without_parameters_give_func_raise_exception(self):
+    def test_try_func_on_result_without_parameters_give_func_raise_exception(self):
         result = Result.ok().try_func(function_raise_exception, num_of_try=2)
 
         self.assertFalse(result.success)
@@ -1044,7 +1068,7 @@ class TestResult(unittest.TestCase):
                             expected_code=500, expected_exception=FAKE_EXCEPTION,
                             expected_more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION])
 
-    def test_try_func_without_parameters_try_only_on_exceptions(self):
+    def test_try_func_on_result_without_parameters_try_only_on_exceptions(self):
         result = Result.ok().try_func(lambda: Result.fail(), num_of_try=2, try_only_on_exceptions=True)
         assert_result(self, result, expected_success=False)
 
@@ -1076,7 +1100,7 @@ class TestResult(unittest.TestCase):
 
         assert_result(self, result, expected_success=True, expected_value=5)
 
-    def test_try_func_with_parameters_try_only_on_exceptions(self):
+    def test_try_func_on_result_with_parameters_try_only_on_exceptions(self):
         result = Result.ok().try_func(lambda x: Result.fail(), num_of_try=2, try_only_on_exceptions=True)
         assert_result(self, result, expected_success=False)
 
@@ -1117,7 +1141,7 @@ class TestResult(unittest.TestCase):
                             expected_code=500, expected_exception=FAKE_EXCEPTION,
                             expected_more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION])
 
-    def test_try_func_give_invalid_func(self):
+    def test_try_func_on_result_give_invalid_func(self):
         result = Result.ok().try_func(lambda x, y: x)
 
         assert_result_with_type(test_class=self, target_result=result, expected_success=False,
@@ -1126,7 +1150,7 @@ class TestResult(unittest.TestCase):
                             expected_title="One or more validation errors occurred",
                             expected_message='<lambda>() takes 2 arguments. It cannot be executed.', expected_code=400)
 
-    def test_try_func_give_BreakRailsException(self):
+    def test_try_func_on_result_give_BreakRailsException(self):
         result = Result.ok(1).try_func(lambda prev: prev \
                                        .on_success(lambda value: value + 1) \
                                        .break_rails(True) \
@@ -1134,7 +1158,7 @@ class TestResult(unittest.TestCase):
                                        )
         assert_result(self, result, expected_success=True, expected_value=2)
 
-    def test_try_func_give_builtin_functions(self):
+    def test_try_func_on_result_give_builtin_functions(self):
         # The sum is supported builtin function
         result = Result.ok(1).try_func(sum)
         assert_result_with_type(test_class=self, target_result=result, expected_success=False,
@@ -1153,6 +1177,19 @@ class TestResult(unittest.TestCase):
                             expected_message='Can not recognize the number of function (print) parameters. '
                                              'You can wrap your built-in function with a python function like `lambda`.'
                             , expected_code=400)
+
+    def test_try_func_on_result_give_BreakFunctionException(self):
+        try:
+            Result.ok(1).try_func(lambda: Result.fail(ErrorDetail()).break_function())
+            self.assertTrue(False)  # Must not reach this line.
+        except BreakFunctionException as e:
+            assert_result_with_type(self, e.result, expected_success=False, expected_detail_type=ErrorDetail)
+
+        try:
+            Result.ok(1).try_func(lambda prev: prev.break_function())
+            self.assertTrue(False)  # Must not reach this line.
+        except BreakFunctionException as e:
+            assert_result(self, e.result, expected_success=True, expected_value=1)
 
     # endregion
 
@@ -1305,6 +1342,29 @@ class TestResult(unittest.TestCase):
 
     # endregion
 
+    # region BreakRails Exception
+
+    def test_BreakFunctionException_ok(self):
+        # Success
+        result = Result.ok(1, SuccessDetail())
+        exception = BreakFunctionException(result)
+
+        assert_exception(self, exception, BreakFunctionException)
+        self.assertEqual(result, exception.result)
+
+        # Failure
+        result = Result.fail(ErrorDetail())
+        exception = BreakFunctionException(result)
+
+        assert_exception(self, exception, BreakFunctionException)
+        self.assertEqual(result, exception.result)
+
+    def test_BreakFunctionException_give_none(self):
+        self.assertRaises(ValueError, lambda: BreakFunctionException(None))
+        self.assertRaises(ValueError, lambda: BreakFunctionException("Not result type"))
+
+    # endregion
+
     # region break_rails
 
     def test_break_rails_with_condition_false(self):
@@ -1339,6 +1399,43 @@ class TestResult(unittest.TestCase):
     def test_break_rails_use_prev_results(self):
         self.assertRaises(BreakRailsException,
                           lambda: Result.ok(1).break_rails(lambda prev_result: prev_result.value == 1))
+
+    # endregion
+
+    # region break_function
+
+    def test_break_function_with_condition_false(self):
+        result = Result.ok(1).break_function(False)
+        assert_result(self, result, expected_success=True, expected_value=1)
+
+        result = Result.ok(1).break_function(lambda: False)
+        assert_result(self, result, expected_success=True, expected_value=1)
+
+        result = Result.ok(1).break_function(lambda: Result.ok(False))
+        assert_result(self, result, expected_success=True, expected_value=1)
+
+    def test_break_function_give_func_fails(self):
+        result = Result.ok(1).break_function(lambda: Result.fail(FAKE_ERROR))
+        assert_result_with_type(self, result, expected_success=False, expected_detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, expected_title="fake", expected_code=500)
+
+        result = Result.ok(1).break_function(function_raise_exception)
+        assert_result_with_type(self, result, expected_success=False, expected_detail_type=ErrorDetail)
+        assert_error_detail(self, result.detail, expected_title="An error occurred",
+                            expected_message="Operation failed with 1 attempts. The details of the 1 errors are stored in the "
+                                             "more_data field. At least one of the errors was an exception type, the first "
+                                             "exception being stored in the exception field.", expected_code=500,
+                            expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION])
+
+    def test_break_function_with_condition_true(self):
+        self.assertRaises(BreakFunctionException, lambda: Result.ok(1).break_function())  # Default is true
+        self.assertRaises(BreakFunctionException, lambda: Result.ok(1).break_function(True))
+        self.assertRaises(BreakFunctionException, lambda: Result.ok(1).break_function(lambda: True))
+        self.assertRaises(BreakFunctionException, lambda: Result.ok(1).break_function(lambda: Result.ok(True)))
+
+    def test_break_function_use_prev_results(self):
+        self.assertRaises(BreakFunctionException,
+                          lambda: Result.ok(1).break_function(lambda prev_result: prev_result.value == 1))
 
     # endregion
 
@@ -1458,9 +1555,9 @@ class TestResultAsync(unittest.IsolatedAsyncioTestCase):
                                              'You can wrap your built-in function with a python function like `lambda`.'
                             , expected_code=400)
 
-    def test_try_func_give_builtin_functions(self):
+    async def test_try_func_give_builtin_functions(self):
         # The sum is supported builtin function
-        result = try_func(sum)
+        result = await try_func_async(sum)
         assert_result_with_type(test_class=self, target_result=result, expected_success=False,
                                 expected_detail_type=ValidationError)
         assert_error_detail(self, target_error_detail=result.detail,
@@ -1469,7 +1566,7 @@ class TestResultAsync(unittest.IsolatedAsyncioTestCase):
                             expected_code=400)
 
         # The print is not supported function
-        result = try_func(print)
+        result = await try_func_async(print)
         assert_result_with_type(test_class=self, target_result=result, expected_success=False,
                                 expected_detail_type=ErrorDetail)
         assert_error_detail(self, target_error_detail=result.detail,
@@ -1477,6 +1574,13 @@ class TestResultAsync(unittest.IsolatedAsyncioTestCase):
                             expected_message='Can not recognize the number of function (print) parameters. '
                                              'You can wrap your built-in function with a python function like `lambda`.'
                             , expected_code=400)
+
+    async def test_try_func_give_BreakFunctionException(self):
+        try:
+            await try_func_async(lambda: Result.fail(ErrorDetail()).break_function())
+            self.assertTrue(False)  # Must not reach this line.
+        except BreakFunctionException as e:
+            assert_result_with_type(self, e.result, expected_success=False, expected_detail_type=ErrorDetail)
 
     # endregion
 

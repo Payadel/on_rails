@@ -628,7 +628,9 @@ class Result(Generic[T]):
 
     def break_rails(self, condition_or_func: Union[Callable, bool] = True):
         """
-        The function raises a BreakRails exception if a given condition is true.
+        The function raises a BreakRailsException if a given condition is true.
+        The BreakRailsException breaks all chaining functions and can catch by
+        @def_result decorator or functions that supports `try_func` like on_success, etc
 
         :param condition_or_func: The parameter `condition_or_func` can be either a callable function or a boolean value.
         It is used to determine whether to break chaining of functions or not. If it is a callable function, it
@@ -649,6 +651,34 @@ class Result(Generic[T]):
 
         self.__break_rails()
         return Result.fail(ErrorDetail(message="The BreakRails exception not raised."))  # pragma: no cover
+
+    def break_function(self, condition_or_func: Union[Callable, bool] = True):
+        """
+        The function raises a BreakFunctionException if a given condition is true.
+        The BreakFunctionException breaks a function to reach @def_result decorator
+        or catches manually.
+        Important: functions like try_func, on_success, ..., can not (should not) capture this exception.
+        Because if this function catch this, the exception can not break all function codes.
+
+        :param condition_or_func: The parameter `condition_or_func` can be either a callable function or a boolean value.
+        It is used to determine whether to break function or not. If it is a callable function, it
+        will be called with previous result as optional parameter.
+        :type condition_or_func: Union[Callable, bool]
+
+        :return: If `condition_or_func` is callable function and fails, it returns error result.
+        Otherwise, raise BreakFunctionException
+
+        :raise BreakFunctionException
+        """
+
+        result = self.__is_condition_pass(condition_or_func, [self])
+        if not result.success:
+            return result  # return error result
+        if not result.value:  # The condition is not true
+            return self
+
+        self.__break_function()
+        return Result.fail(ErrorDetail(message="The BreakFunctionException not raised."))  # pragma: no cover
 
     # region private methods
 
@@ -714,6 +744,9 @@ class Result(Generic[T]):
     def __break_rails(self):
         raise BreakRailsException(result=self)
 
+    def __break_function(self):
+        raise BreakFunctionException(result=self)
+
     # endregion
 
 
@@ -762,6 +795,8 @@ def try_func(func: Callable, num_of_try: int = 1, try_only_on_exceptions: bool =
                 return result
             if result.detail:
                 errors.append(result.detail)
+        except BreakFunctionException:
+            raise  # Must be captured and managed in @def_result decorator.
         except BreakRailsException as e:
             return e.result
         except Exception as e:
@@ -812,6 +847,8 @@ async def try_func_async(func_async: Callable, num_of_try: int = 1, try_only_on_
                 return result
             if result.detail:
                 errors.append(result.detail)
+        except BreakFunctionException:
+            raise  # Must be captured and managed in @def_result decorator.
         except BreakRailsException as e:
             return e.result
         except Exception as e:
@@ -837,6 +874,7 @@ class BreakRailsException(Exception):
     An exception for break fast chaining of functions.
     It stores the last result.
     """
+
     result: Result
 
     def __init__(self, result: Result):
@@ -847,6 +885,32 @@ class BreakRailsException(Exception):
         the `result` parameter is not `None` and is an instance of the `Result` class
         :type result: Result
         """
+
+        super().__init__()
+        if result is None:
+            raise ValueError("The result cannot be None")
+        if not isinstance(result, Result):
+            raise ValueError("The result must be an instance of Result")
+        self.result = result
+
+
+class BreakFunctionException(Exception):
+    """
+    An exception for break fast function.
+    It only catches by @def_result decorator and stores the last result.
+    """
+
+    result: Result
+
+    def __init__(self, result: Result):
+        """
+        This function initializes an object with a non-null and valid instance of the Result class.
+
+        :param result: The `result` parameter is an instance of the `Result` class. The constructor checks if
+        the `result` parameter is not `None` and is an instance of the `Result` class
+        :type result: Result
+        """
+
         super().__init__()
         if result is None:
             raise ValueError("The result cannot be None")
