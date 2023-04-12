@@ -257,7 +257,7 @@ class Result(Generic[T]):
         return self.__operate_when(condition_or_func, func, [self.value, self],
                                    num_of_try, try_only_on_exceptions, break_rails)
 
-    def on_success_break(self, condition_or_func: Union[Callable, bool] = True):
+    def on_success_break_rails(self, condition_or_func: Union[Callable, bool] = True):
         """
         The function raises a BreakRails exception if a given condition is true.
 
