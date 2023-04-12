@@ -851,26 +851,26 @@ class TestResult(unittest.TestCase):
     # region on_fail_break
 
     def test_on_fail_break_on_success_result(self):
-        result = Result.ok(1).on_fail_break(True)
+        result = Result.ok(1).on_fail_break_rails(True)
 
         assert_result(self, result, expected_success=True, expected_value=1)
 
     def test_on_fail_break_with_condition_false(self):
-        result = Result.fail().on_fail_break(False)
+        result = Result.fail().on_fail_break_rails(False)
         assert_result(self, result, expected_success=False)
 
-        result = Result.fail().on_fail_break(lambda: False)
+        result = Result.fail().on_fail_break_rails(lambda: False)
         assert_result(self, result, expected_success=False)
 
-        result = Result.fail().on_fail_break(lambda: Result.ok(False))
+        result = Result.fail().on_fail_break_rails(lambda: Result.ok(False))
         assert_result(self, result, expected_success=False)
 
-    def test_on_fail_break_give_func_fails(self):
-        result = Result.fail().on_fail_break(lambda: Result.fail(FAKE_ERROR))
+    def test_on_fail_break_rails_give_func_fails(self):
+        result = Result.fail().on_fail_break_rails(lambda: Result.fail(FAKE_ERROR))
         assert_result_with_type(self, result, expected_success=False, expected_detail_type=ErrorDetail)
         assert_error_detail(self, result.detail, expected_title="fake", expected_code=500)
 
-        result = Result.fail().on_fail_break(function_raise_exception)
+        result = Result.fail().on_fail_break_rails(function_raise_exception)
         assert_result_with_type(self, result, expected_success=False, expected_detail_type=ErrorDetail)
         assert_error_detail(self, result.detail, expected_title="An error occurred",
                             expected_message="Operation failed with 1 attempts. The details of the 1 errors are stored in the "
@@ -878,15 +878,15 @@ class TestResult(unittest.TestCase):
                                              "exception being stored in the exception field.", expected_code=500,
                             expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION])
 
-    def test_on_fail_break_with_condition_true(self):
-        self.assertRaises(BreakRailsException, lambda: Result.fail().on_fail_break())  # Default is true
-        self.assertRaises(BreakRailsException, lambda: Result.fail().on_fail_break(True))
-        self.assertRaises(BreakRailsException, lambda: Result.fail().on_fail_break(lambda: True))
-        self.assertRaises(BreakRailsException, lambda: Result.fail().on_fail_break(lambda: Result.ok(True)))
+    def test_on_fail_break_rails_with_condition_true(self):
+        self.assertRaises(BreakRailsException, lambda: Result.fail().on_fail_break_rails())  # Default is true
+        self.assertRaises(BreakRailsException, lambda: Result.fail().on_fail_break_rails(True))
+        self.assertRaises(BreakRailsException, lambda: Result.fail().on_fail_break_rails(lambda: True))
+        self.assertRaises(BreakRailsException, lambda: Result.fail().on_fail_break_rails(lambda: Result.ok(True)))
 
-    def test_on_fail_break_use_prev_results(self):
+    def test_on_fail_break_rails_use_prev_results(self):
         self.assertRaises(BreakRailsException,
-                          lambda: Result.fail().on_fail_break(lambda prev_result: not prev_result.success))
+                          lambda: Result.fail().on_fail_break_rails(lambda prev_result: not prev_result.success))
 
     # endregion
 

@@ -468,7 +468,7 @@ class Result(Generic[T]):
         return self.__operate_when(condition_or_func, func, [self], num_of_try,
                                    try_only_on_exceptions, break_rails, none_means_success=False)
 
-    def on_fail_break(self, condition_or_func: Union[Callable, bool] = True):
+    def on_fail_break_rails(self, condition_or_func: Union[Callable, bool] = True):
         """
         The function raises a BreakRails exception if a given condition is true.
 
@@ -482,6 +482,7 @@ class Result(Generic[T]):
 
         :raise BreakRails
         """
+
         if self.success:
             return self
 
