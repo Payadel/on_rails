@@ -2,9 +2,11 @@
 
 import asyncio
 import unittest
+from typing import Optional
 
 from on_rails.Result import (BreakRailsException, Result,
-                             _get_num_of_function_parameters, try_func)
+                             _get_num_of_function_parameters, try_func,
+                             try_func_async)
 from on_rails.ResultDetail import ResultDetail
 from on_rails.ResultDetails.ErrorDetail import ErrorDetail
 from on_rails.ResultDetails.Errors.BadRequestError import BadRequestError
@@ -22,9 +24,23 @@ def function_raise_exception():
     raise FAKE_EXCEPTION
 
 
+async def function_raise_exception_async():
+    raise FAKE_EXCEPTION
+
+
+async def function_fails_async(error_detail: Optional[ErrorDetail] = None):
+    await asyncio.sleep(0)
+    return Result.fail(detail=error_detail)
+
+
 async def async_function():
     await asyncio.sleep(0)
     return 5
+
+
+async def async_function_with_parameter(number: int):
+    await asyncio.sleep(0)
+    return number + 1
 
 
 class TestResult(unittest.TestCase):
@@ -1057,6 +1073,14 @@ class TestResult(unittest.TestCase):
                             expected_title="One or more validation errors occurred",
                             expected_message='<lambda>() takes 2 arguments. It cannot be executed.', expected_code=400)
 
+    def test_try_func_give_BreakRailsException(self):
+        result = Result.ok(1).try_func(lambda prev: prev \
+                                       .on_success(lambda value: value + 1) \
+                                       .break_rails(True) \
+                                       .on_success(lambda value: value + 1)
+                                       )
+        assert_result(self, result, expected_success=True, expected_value=2)
+
     # endregion
 
     # region operate_when
@@ -1273,6 +1297,72 @@ class TestResult(unittest.TestCase):
                             expected_message="Can not recognize the number of function (print) parameters. "
                                              "You can wrap your built-in function with a python "
                                              "function like `lambda`.", expected_code=400)
+
+    # endregion
+
+
+class TestResultAsync(unittest.IsolatedAsyncioTestCase):
+    # region try_func_async
+
+    async def test_try_func_async_give_none(self):
+        result = await try_func_async(None)
+
+        assert_result_with_type(test_class=self, target_result=result, expected_success=False,
+                                expected_detail_type=ValidationError)
+        assert_error_detail(self, target_error_detail=result.detail,
+                            expected_title="One or more validation errors occurred",
+                            expected_message="The input function is not valid.", expected_code=400)
+
+    async def test_try_func_async_give_func_with_parameters(self):
+        result = await try_func_async(async_function_with_parameter)
+
+        assert_result_with_type(test_class=self, target_result=result, expected_success=False,
+                                expected_detail_type=ValidationError)
+        assert_error_detail(self, target_error_detail=result.detail,
+                            expected_title="One or more validation errors occurred",
+                            expected_message='async_function_with_parameter() takes 1 arguments. It cannot be executed.',
+                            expected_code=400)
+
+    async def test_try_func_async_give_func_ok(self):
+        result = await try_func_async(lambda: async_function())
+        assert_result(self, result, expected_success=True, expected_value=5)
+
+        result = await try_func_async(lambda: 5)
+        assert_result(self, result, expected_success=True, expected_value=5)
+
+        result = await try_func_async(lambda: None)
+        assert_result(self, result, expected_success=True)
+
+        result = await try_func_async(async_function)
+        assert_result(self, result, expected_success=True, expected_value=5)
+
+    async def test_try_func_async_give_func_error(self):
+        result = await try_func_async(function_raise_exception_async, num_of_try=2)
+        self.assertFalse(result.success)
+        assert_error_detail(self, target_error_detail=result.detail, expected_title="An error occurred",
+                            expected_message='Operation failed with 2 attempts. The details of the 2 errors are stored in the '
+                                             'more_data field. At least one of the errors was an exception type, the first '
+                                             'exception being stored in the exception field.',
+                            expected_code=500, expected_exception=FAKE_EXCEPTION,
+                            expected_more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION])
+
+    async def test_try_func_async_try_only_on_exceptions(self):
+        result = await try_func_async(lambda: function_fails_async(), num_of_try=2, try_only_on_exceptions=True)
+        assert_result(self, result, expected_success=False)
+
+        result = await try_func_async(lambda: function_fails_async(), num_of_try=2, try_only_on_exceptions=False)
+        self.assertFalse(result.success)
+        assert_error_detail(self, target_error_detail=result.detail, expected_title="An error occurred",
+                            expected_message='Operation failed with 2 attempts. There is no more information.',
+                            expected_code=500)
+
+        result = await try_func_async(lambda: function_fails_async(FAKE_ERROR), num_of_try=2,
+                                      try_only_on_exceptions=False)
+        self.assertFalse(result.success)
+        assert_error_detail(self, target_error_detail=result.detail, expected_title="An error occurred",
+                            expected_message='Operation failed with 2 attempts. '
+                                             'The details of the 2 errors are stored in the more_data field. ',
+                            expected_code=500, expected_more_data=[FAKE_ERROR, FAKE_ERROR])
 
     # endregion
 

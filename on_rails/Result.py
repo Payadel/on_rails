@@ -1,7 +1,8 @@
-from typing import Any, Callable, Generic, List, Optional, TypeVar, Union
+from typing import (Any, Callable, Coroutine, Generic, List, Optional, TypeVar,
+                    Union)
 
 from on_rails._utility import (await_func, generate_error,
-                               is_func_valid, get_num_of_function_parameters)
+                               get_num_of_function_parameters, is_func_valid)
 from on_rails.ResultDetail import ResultDetail
 from on_rails.ResultDetails.ErrorDetail import ErrorDetail
 from on_rails.ResultDetails.Errors.ValidationError import ValidationError
@@ -33,7 +34,7 @@ class Result(Generic[T]):
         if self.value:
             result += f"Value: {self.value}\n"
         if self.detail:
-            result += f"Detail:\n{self.detail}\n"
+            result += f"Detail:\n{str(self.detail)}\n"
         return result
 
     # region Static Methods
@@ -724,6 +725,56 @@ def try_func(func: Callable, num_of_try: int = 1, try_only_on_exceptions: bool =
                 return result
             if result.detail:
                 errors.append(result.detail)
+        except BreakRailsException as e:
+            return e.result
+        except Exception as e:
+            errors.append(e)
+
+    error_detail = generate_error(errors, num_of_try)
+    return Result.fail(error_detail)
+
+
+async def try_func_async(func_async: Callable, num_of_try: int = 1, try_only_on_exceptions: bool = True) -> Result:
+    """
+    The function `try_func` attempts to execute a given function with a specified number of tries and handles errors.
+
+    :param func_async: The input function that needs to be executed
+    :param num_of_try: The number of times the input function will be attempted to execute in case of failure. The default
+    value is 1, meaning the function will be executed only once by default, defaults to 1 (optional)
+    :return: a `Result` object. The `Result` object can either be a successful result or a failed result with an
+    `ValidationError` object containing information about the error.
+
+    :param try_only_on_exceptions: A boolean parameter that determines whether the function should only be retried if an
+    exception is raised. If set to True, the function will only be retried if an exception is raised. If set to False, the
+    function will be retried regardless of whether an exception is raised or Result is not success, defaults to True
+    :type try_only_on_exceptions: bool (optional)
+    :return: a `Result` object.
+    """
+    if not is_func_valid(func_async):
+        return Result.fail(ValidationError(message="The input function is not valid."))
+
+    result = _get_num_of_function_parameters(func_async)
+    if not result.success:
+        return result
+    num_of_function_params = result.value
+
+    if num_of_function_params > 0:
+        return Result.fail(ValidationError(
+            message=f"{func_async.__name__}() takes {num_of_function_params} arguments. It cannot be executed."))
+
+    errors = []
+    for _ in range(num_of_try):
+        try:
+            result = func_async()
+            if isinstance(result, Coroutine):
+                result = await result
+            result = Result.convert_to_result(result)
+            if result.success or try_only_on_exceptions:
+                return result
+            if result.detail:
+                errors.append(result.detail)
+        except BreakRailsException as e:
+            return e.result
         except Exception as e:
             errors.append(e)
 
@@ -736,7 +787,7 @@ def _get_num_of_function_parameters(func: Callable):
         return Result.ok(get_num_of_function_parameters(func))
     except Exception:
         return Result.fail(ErrorDetail(title="Function Parameter Detection Error",
-                                       message=f"Can not recognize the number of function ({type(func).__name__}) "
+                                       message=f"Can not recognize the number of function ({func.__name__}) "
                                                f"parameters. You can wrap your built-in function with a python "
                                                f"function like `lambda`.", code=400))
 
