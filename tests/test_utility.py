@@ -19,8 +19,14 @@ class TestUtility(unittest.TestCase):
         self.assertRaises(TypeError, get_num_of_function_parameters, None)
 
     def test_get_num_of_function_parameters(self):
-        self.assertEqual(get_num_of_function_parameters(lambda x: x), 1)
-        self.assertEqual(get_num_of_function_parameters(lambda x, y: x), 2)
+        self.assertEqual(1, get_num_of_function_parameters(lambda x: x))
+        self.assertEqual(2, get_num_of_function_parameters(lambda x, y: x))
+
+    def test_get_num_of_function_parameters_builtin_functions(self):
+        # Works for some builtin functions not all
+        self.assertEqual(2, get_num_of_function_parameters(sum))
+
+        self.assertRaises(AttributeError, get_num_of_function_parameters, print)
 
     # endregion
 
@@ -39,28 +45,32 @@ class TestUtility(unittest.TestCase):
 
     def test_generate_error_none_or_empty_errors(self):
         error_detail = generate_error(None, 2)
-        assert_error_detail(self, target_error_detail=error_detail, expected_title="An error occurred", expected_code=500,
+        assert_error_detail(self, target_error_detail=error_detail, expected_title="An error occurred",
+                            expected_code=500,
                             expected_message='Operation failed with 2 attempts. There is no more information.')
 
         error_detail = generate_error([], 2)
-        assert_error_detail(self, target_error_detail=error_detail, expected_title="An error occurred", expected_code=500,
+        assert_error_detail(self, target_error_detail=error_detail, expected_title="An error occurred",
+                            expected_code=500,
                             expected_message='Operation failed with 2 attempts. There is no more information.')
 
     def test_generate_error_without_exception_error(self):
         error = ErrorDetail()
         error_detail = generate_error([error], 2)
-        assert_error_detail(self, target_error_detail=error_detail, expected_title="An error occurred", expected_code=500,
+        assert_error_detail(self, target_error_detail=error_detail, expected_title="An error occurred",
+                            expected_code=500,
                             expected_message='Operation failed with 2 attempts. The details of the 1 errors '
-                                    'are stored in the more_data field. ',
+                                             'are stored in the more_data field. ',
                             expected_more_data=[error])
 
     def test_generate_error_with_exception_error(self):
         exception = TypeError()
         error_detail = generate_error([exception], 2)
-        assert_error_detail(self, target_error_detail=error_detail, expected_title="An error occurred", expected_code=500,
+        assert_error_detail(self, target_error_detail=error_detail, expected_title="An error occurred",
+                            expected_code=500,
                             expected_message='Operation failed with 2 attempts. The details of the 1 errors are stored in '
-                                    'the more_data field. At least one of the errors was an exception type, '
-                                    'the first exception being stored in the exception field.',
+                                             'the more_data field. At least one of the errors was an exception type, '
+                                             'the first exception being stored in the exception field.',
                             expected_more_data=[exception], expected_exception=exception)
 
     # endregion

@@ -7,7 +7,8 @@ from on_rails.ResultDetails.ErrorDetail import ErrorDetail
 
 
 def assert_result(test_class: unittest.TestCase, target_result: Result, expected_success: bool,
-                  expected_detail: Optional[ResultDetail] = None, expected_value: Optional[Any] = None) -> None:
+                  expected_detail: Optional[ResultDetail] = None, expected_value: Optional[Any] = None,
+                  print_detail_if_failed=True) -> None:
     """
     This function asserts that the given result matches the expected success, detail, and value.
 
@@ -29,9 +30,10 @@ def assert_result(test_class: unittest.TestCase, target_result: Result, expected
     :param expected_value: The expected value of `value`. It will check with `result.value`
     :type expected_value: Optional[Any]
     """
-    test_class.assertEqual(expected_success, target_result.success, msg="success")
-    test_class.assertEqual(expected_detail, target_result.detail, msg="detail")
+    test_class.assertEqual(expected_success, target_result.success,
+                           msg=f"success {target_result if print_detail_if_failed else ''}")
     test_class.assertEqual(expected_value, target_result.value, msg="value")
+    test_class.assertEqual(expected_detail, target_result.detail, msg="detail")
 
 
 def assert_result_with_type(test_class: unittest.TestCase, target_result: Result, expected_success: bool,
@@ -57,6 +59,7 @@ def assert_result_with_type(test_class: unittest.TestCase, target_result: Result
     :param expected_value: The expected value of `value`. It will check with `result.value`
     :type expected_value: Optional[Any]
     """
+    test_class.assertTrue(isinstance(target_result, Result), msg="Target must be an instance of Result")
     test_class.assertEqual(expected_success, target_result.success, msg="success")
     test_class.assertTrue(isinstance(target_result.detail, expected_detail_type), msg="detail type")
     test_class.assertEqual(expected_value, target_result.value, msg="value")
@@ -89,6 +92,8 @@ def assert_result_detail(test_class: unittest.TestCase, target_result_detail: Re
     """
     if expected_more_data is None:
         expected_more_data = []
+    test_class.assertTrue(isinstance(target_result_detail, ResultDetail),
+                          msg="Target must be an instance of ResultDetail")
     test_class.assertEqual(expected_title, target_result_detail.title, msg="title")
     test_class.assertEqual(expected_message, target_result_detail.message, msg="message")
     test_class.assertEqual(expected_code, target_result_detail.code, msg="code")
@@ -133,6 +138,8 @@ def assert_error_detail(test_class: unittest.TestCase, target_error_detail: Erro
     """
     if expected_more_data is None:
         expected_more_data = []
+    test_class.assertTrue(isinstance(target_error_detail, ErrorDetail),
+                          msg=f"Target ({type(target_error_detail).__name__}) must be an instance of ErrorDetail")
     assert_result_detail(test_class=test_class, target_result_detail=target_error_detail,
                          expected_title=expected_title, expected_message=expected_message, expected_code=expected_code,
                          expected_more_data=expected_more_data)

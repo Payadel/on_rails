@@ -1,12 +1,12 @@
 import asyncio
 import inspect
 from asyncio import AbstractEventLoop
-from typing import Any, Coroutine, List
+from typing import Any, Callable, Coroutine, List
 
 from on_rails.ResultDetails.ErrorDetail import ErrorDetail
 
 
-def get_num_of_function_parameters(func: callable) -> int:
+def get_num_of_function_parameters(func: Callable) -> int:
     """
     Returns the number of parameters of a given function.
 
@@ -14,10 +14,13 @@ def get_num_of_function_parameters(func: callable) -> int:
     takes
     :return: Returns the number of parameters that the function takes.
     """
-    return len(inspect.signature(func).parameters)
+    try:
+        return len(inspect.signature(func).parameters)
+    except ValueError:
+        return func.__code__.co_argcount
 
 
-def is_async(func: callable):
+def is_async(func: Callable):
     """
     The function checks if a given function is a coroutine function
 
