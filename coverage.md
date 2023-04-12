@@ -21,5 +21,4 @@
 | on\_rails/\_\_init\_\_.py                               |        4 |        0 |        0 |        0 |     100% |           |
 | on\_rails/\_utility.py                                  |       38 |        0 |        8 |        0 |     100% |           |
 | on\_rails/decorator.py                                  |       15 |        0 |        4 |        0 |     100% |           |
-| on\_rails/test\_helpers.py                              |       31 |        0 |        4 |        0 |     100% |           |
-|                                               **TOTAL** |  **548** |    **0** |  **218** |    **0** | **100%** |           |
+| on\_rails/test\_helpers.py                              |       31 |        0 |        4 |        0 |     100% |           |                                        **TOTAL** |  **548** |    **0** |  **218** |    **0** | **100%** |           |
