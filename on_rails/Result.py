@@ -120,6 +120,7 @@ class Result(Generic[T]):
 
         :return: The method `on_success` returns either self or the result of given function.
         """
+
         if not self.success:
             return self
 
@@ -307,6 +308,7 @@ class Result(Generic[T]):
 
         :return: The result object is being returned.
         """
+
         if not is_func_valid(func):
             return Result.fail(ValidationError(message="The input function is not valid."))
         if self.success:

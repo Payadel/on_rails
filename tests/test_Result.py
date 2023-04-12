@@ -231,6 +231,18 @@ class TestResult(unittest.TestCase):
                             expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION, FAKE_EXCEPTION],
                             expected_code=500)
 
+    def test_on_success_give_builtin_functions(self):
+        # The print is not supported function
+        result = Result.ok(1).on_success(print)
+        assert_result_with_type(test_class=self, target_result=result, expected_success=False,
+                                expected_detail_type=ErrorDetail)
+        assert_error_detail(self, target_error_detail=result.detail,
+                            expected_title="Function Parameter Detection Error",
+                            expected_message='Can not recognize the number of function (print) parameters. '
+                                             'You can wrap your built-in function with a python function like `lambda`.'
+                            , expected_code=400)
+
+
     # endregion
 
     # region on_success_operate_when
@@ -1081,6 +1093,26 @@ class TestResult(unittest.TestCase):
                                        )
         assert_result(self, result, expected_success=True, expected_value=2)
 
+    def test_try_func_give_builtin_functions(self):
+        # The sum is supported builtin function
+        result = Result.ok(1).try_func(sum)
+        assert_result_with_type(test_class=self, target_result=result, expected_success=False,
+                                expected_detail_type=ValidationError)
+        assert_error_detail(self, target_error_detail=result.detail,
+                            expected_title="One or more validation errors occurred",
+                            expected_message='sum() takes 2 arguments. It cannot be executed.',
+                            expected_code=400)
+
+        # The print is not supported function
+        result = Result.ok(1).try_func(print)
+        assert_result_with_type(test_class=self, target_result=result, expected_success=False,
+                                expected_detail_type=ErrorDetail)
+        assert_error_detail(self, target_error_detail=result.detail,
+                            expected_title="Function Parameter Detection Error",
+                            expected_message='Can not recognize the number of function (print) parameters. '
+                                             'You can wrap your built-in function with a python function like `lambda`.'
+                            , expected_code=400)
+
     # endregion
 
     # region operate_when
@@ -1363,6 +1395,46 @@ class TestResultAsync(unittest.IsolatedAsyncioTestCase):
                             expected_message='Operation failed with 2 attempts. '
                                              'The details of the 2 errors are stored in the more_data field. ',
                             expected_code=500, expected_more_data=[FAKE_ERROR, FAKE_ERROR])
+
+    async def test_try_func_async_give_builtin_functions(self):
+        # The sum is supported builtin function
+        result = await try_func_async(sum)
+        assert_result_with_type(test_class=self, target_result=result, expected_success=False,
+                                expected_detail_type=ValidationError)
+        assert_error_detail(self, target_error_detail=result.detail,
+                            expected_title="One or more validation errors occurred",
+                            expected_message='sum() takes 2 arguments. It cannot be executed.',
+                            expected_code=400)
+
+        # The print is not supported function
+        result = await try_func_async(print)
+        assert_result_with_type(test_class=self, target_result=result, expected_success=False,
+                                expected_detail_type=ErrorDetail)
+        assert_error_detail(self, target_error_detail=result.detail,
+                            expected_title="Function Parameter Detection Error",
+                            expected_message='Can not recognize the number of function (print) parameters. '
+                                             'You can wrap your built-in function with a python function like `lambda`.'
+                            , expected_code=400)
+
+    def test_try_func_give_builtin_functions(self):
+        # The sum is supported builtin function
+        result = try_func(sum)
+        assert_result_with_type(test_class=self, target_result=result, expected_success=False,
+                                expected_detail_type=ValidationError)
+        assert_error_detail(self, target_error_detail=result.detail,
+                            expected_title="One or more validation errors occurred",
+                            expected_message='sum() takes 2 arguments. It cannot be executed.',
+                            expected_code=400)
+
+        # The print is not supported function
+        result = try_func(print)
+        assert_result_with_type(test_class=self, target_result=result, expected_success=False,
+                                expected_detail_type=ErrorDetail)
+        assert_error_detail(self, target_error_detail=result.detail,
+                            expected_title="Function Parameter Detection Error",
+                            expected_message='Can not recognize the number of function (print) parameters. '
+                                             'You can wrap your built-in function with a python function like `lambda`.'
+                            , expected_code=400)
 
     # endregion
 
