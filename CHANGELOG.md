@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.0.1](https://github.com/Payadel/on_rails/compare/v4.0.0...v4.0.1) (2023-04-12)
+
+
+### Fixes
+
+* fix `on_fail_tee` when `func` returns `None` ([0d64b3f](https://github.com/Payadel/on_rails/commit/0d64b3ffbc18d4504036191a8ba44bde6855cbb1))
+
 ## [4.0.0](https://github.com/Payadel/on_rails/compare/v3.1.0...v4.0.0) (2023-04-12)
 
 
