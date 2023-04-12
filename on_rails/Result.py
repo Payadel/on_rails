@@ -37,6 +37,14 @@ class Result(Generic[T]):
             result += f"Detail:\n{str(self.detail)}\n"
         return result
 
+    def __repr__(self):
+        result = f"success: {self.success}\n"
+        if self.value:
+            result += f"Value: {self.value}\n"
+        if self.detail:
+            result += f"Detail:\n{repr(self.detail)}\n"
+        return result
+
     # region Static Methods
 
     @staticmethod

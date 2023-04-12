@@ -7,7 +7,8 @@ from on_rails.ResultDetails.ErrorDetail import ErrorDetail
 
 
 def assert_result(test_class: unittest.TestCase, target_result: Result, expected_success: bool,
-                  expected_detail: Optional[ResultDetail] = None, expected_value: Optional[Any] = None) -> None:
+                  expected_detail: Optional[ResultDetail] = None, expected_value: Optional[Any] = None,
+                  print_detail_if_failed=True) -> None:
     """
     This function asserts that the given result matches the expected success, detail, and value.
 
@@ -29,9 +30,10 @@ def assert_result(test_class: unittest.TestCase, target_result: Result, expected
     :param expected_value: The expected value of `value`. It will check with `result.value`
     :type expected_value: Optional[Any]
     """
-    test_class.assertEqual(expected_success, target_result.success, msg="success")
-    test_class.assertEqual(expected_detail, target_result.detail, msg="detail")
+    test_class.assertEqual(expected_success, target_result.success,
+                           msg=f"success {target_result if print_detail_if_failed else ''}")
     test_class.assertEqual(expected_value, target_result.value, msg="value")
+    test_class.assertEqual(expected_detail, target_result.detail, msg="detail")
 
 
 def assert_result_with_type(test_class: unittest.TestCase, target_result: Result, expected_success: bool,
