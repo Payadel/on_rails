@@ -259,7 +259,9 @@ class Result(Generic[T]):
 
     def on_success_break_rails(self, condition_or_func: Union[Callable, bool] = True):
         """
-        The function raises a BreakRails exception if a given condition is true.
+        The function raises a BreakRailsException if a given condition is true.
+        The BreakRailsException breaks all chaining functions and can catch by
+        @def_result decorator or functions that supports `try_func` like on_success, etc
 
         :param condition_or_func: The parameter `condition_or_func` can be either a callable function or a boolean value.
         It is used to determine whether to break chaining of functions or not. If it is a callable function, it
@@ -470,7 +472,9 @@ class Result(Generic[T]):
 
     def on_fail_break_rails(self, condition_or_func: Union[Callable, bool] = True):
         """
-        The function raises a BreakRails exception if a given condition is true.
+        The function raises a BreakRailsException if a given condition is true.
+        The BreakRailsException breaks all chaining functions and can catch by
+        @def_result decorator or functions that supports `try_func` like on_success, etc
 
         :param condition_or_func: The parameter `condition_or_func` can be either a callable function or a boolean value.
         It is used to determine whether to break chaining of functions or not. If it is a callable function, it
@@ -478,15 +482,35 @@ class Result(Generic[T]):
         :type condition_or_func: Union[Callable, bool]
 
         :return: If `condition_or_func` is callable function and fails, it returns error result.
-        Otherwise, raise BreakRails exception
+        Otherwise, raise BreakRailsException
 
-        :raise BreakRails
+        :raise BreakRailsException
         """
 
         if self.success:
             return self
 
         return self.break_rails(condition_or_func)
+
+    def on_fail_break_function(self, condition_or_func: Union[Callable, bool] = True):
+        """
+        The function raises a BreakFunctionException if a given condition is true.
+
+        :param condition_or_func: The parameter `condition_or_func` can be either a callable function or a boolean value.
+        It is used to determine whether to break chaining of functions or not. If it is a callable function, it
+        will be called with two optional arguments: the value and the result of the previous operation.
+        :type condition_or_func: Union[Callable, bool]
+
+        :return: If `condition_or_func` is callable function and fails, it returns error result.
+        Otherwise, raise BreakFunctionException
+
+        :raise BreakFunctionException
+        """
+
+        if self.success:
+            return self
+
+        return self.break_function(condition_or_func)
 
     # endregion
 
