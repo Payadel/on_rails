@@ -166,6 +166,34 @@ class TestResult(unittest.TestCase):
 
     # endregion
 
+    # region __repr__
+
+    def test_repr_error(self):
+        result = Result.fail(detail=ErrorDetail(message="test"))
+        self.assertTrue(
+            "success: False"
+            in repr(result))
+
+    def test_repr_error_with_detail(self):
+        result = Result.fail(detail=ErrorDetail(message="test"))
+        self.assertTrue(
+            "success: False\nDetail:\nTitle: An error occurred\nMessage: test\nCode: 500\nStack trace:"
+            in repr(result))
+
+    def test_repr_with_success_value(self):
+        result = Result.ok(value=1)
+        self.assertTrue(
+            "success: True\nValue: 1"
+            in repr(result))
+
+    def test_repr_with_success_value_and_detail(self):
+        result = Result.ok(value=1, detail=SuccessDetail(message="test"))
+        self.assertTrue(
+            "success: True\nValue: 1\nDetail:\nTitle: Operation was successful\nMessage: test\nCode: 200"
+            in repr(result))
+
+    # endregion
+
     # region on_success
 
     def test_on_success_give_none(self):
@@ -241,7 +269,6 @@ class TestResult(unittest.TestCase):
                             expected_message='Can not recognize the number of function (print) parameters. '
                                              'You can wrap your built-in function with a python function like `lambda`.'
                             , expected_code=400)
-
 
     # endregion
 
