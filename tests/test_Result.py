@@ -220,11 +220,14 @@ class TestResult(unittest.TestCase):
         assert_result(self, func_result, expected_success=True, expected_value=5)
 
     def test_on_success_with_None_result(self):
-        success_result = Result.ok(1)
+        result = Result.ok(1).on_success(lambda: None)
+        assert_result(self, result, expected_success=True)
 
-        func_result = success_result.on_success(lambda: None)
+        result = Result.ok(1).on_success(lambda value: None)
+        assert_result(self, result, expected_success=True)
 
-        assert_result(self, func_result, expected_success=True)
+        result = Result.ok(1).on_success(lambda value, prev_result: None)
+        assert_result(self, result, expected_success=True)
 
     def test_on_success_use_prev_value(self):
         func_result = Result.ok(1).on_success(lambda value: value + 1)
@@ -637,11 +640,11 @@ class TestResult(unittest.TestCase):
         assert_result(self, func_result, expected_success=True, expected_value=5)
 
     def test_on_fail_with_None_result(self):
-        result = Result.fail()
+        result = Result.fail().on_fail(lambda: None)
+        assert_result(self, result, expected_success=False)
 
-        func_result = result.on_fail(lambda: None)
-
-        assert_result(self, func_result, expected_success=True)
+        result = Result.fail().on_fail(lambda x: None)
+        assert_result(self, result, expected_success=False)
 
     def test_on_fail_use_prev_result(self):
         result = Result.fail()

@@ -79,14 +79,17 @@ class Result(Generic[T]):
 
         :param value: The output parameter is of type Any, which means it can be any Python object
         :type value: Any
+
         :param none_means_success: A boolean parameter that determines whether a `None` output should be considered a
         success or a failure. If `none_means_success` is `True`, then a `None` output will be considered a success and the
         function will return a `Result.ok()` instance. If `none_means_success` is, defaults to True
         :type none_means_success: bool (optional)
+
         :return: The function `convert_to_result` returns a `Result` object. If the `output` parameter is `None`, it returns
         a `Result` object with a success status if `none_means_success` is `True`, otherwise it returns a `Result` object
         with a failure status. If the `output` parameter is already a `Result` object, it returns it as is. Otherwise,
         """
+
         if value is None:
             return Result.ok() if none_means_success else Result.fail()
         if isinstance(value, Result):
@@ -322,7 +325,7 @@ class Result(Generic[T]):
         if self.success:
             return self
         return self.try_func(func, num_of_try, ignore_previous_error=True,
-                             try_only_on_exceptions=try_only_on_exceptions)
+                             try_only_on_exceptions=try_only_on_exceptions, none_means_success=False)
 
     def on_fail_add_more_data(self, object_or_func: Union[Any, Callable], ignore_errors: bool = False):
         """
@@ -546,28 +549,37 @@ class Result(Generic[T]):
                                    break_rails=break_rails)
 
     def try_func(self, func: Callable, num_of_try: int = 1,
-                 ignore_previous_error: bool = False, try_only_on_exceptions: bool = True):
+                 ignore_previous_error: bool = False, try_only_on_exceptions: bool = True,
+                 none_means_success: bool = True):
         """
         The function `try_func` attempts to execute a given function with a specified number of tries and handles errors.
 
         :param func: `func` is a function object that will be executed by the `try_func` method. It is the main parameter of
         the method and must be provided for the method to work
+
         :param num_of_try: The number of times the function should be attempted before returning a failure result. The
         default value is 1, meaning the function will be attempted once, defaults to 1 (optional)
+
         :param ignore_previous_error: By default, if the previous function fails, the Result is
          passed as a parameter to the new function. That is, the new function must accept
          1 parameter. If skip_previous_error is True, the new function can be with or without parameters.
         :type ignore_previous_error: bool (optional)
         the error.
 
-    :param try_only_on_exceptions: A boolean parameter that determines whether the function should only be retried if an
-    exception is raised. If set to True, the function will only be retried if an exception is raised. If set to False, the
-    function will be retried regardless of whether an exception is raised or Result is not success, defaults to True
-    :type try_only_on_exceptions: bool (optional)
+        :param try_only_on_exceptions: A boolean parameter that determines whether the function should only be retried if an
+        exception is raised. If set to True, the function will only be retried if an exception is raised. If set to False, the
+        function will be retried regardless of whether an exception is raised or Result is not success, defaults to True
+        :type try_only_on_exceptions: bool (optional)
 
-    :return: a `Result` object.
-        :return: an instance of the `Result` class, which contains either a successful result or an error message.
+        :param none_means_success: A boolean parameter that determines whether a `None` output should be considered a
+        success or a failure. If `none_means_success` is `True`, then a `None` output will be considered a success and the
+        function will return a `Result.ok()` instance. If `none_means_success` is, defaults to True
+        :type none_means_success: bool (optional)
+
+        :return: a `Result` object.
+            :return: an instance of the `Result` class, which contains either a successful result or an error message.
         """
+
         if not is_func_valid(func):
             return Result.fail(ValidationError(message="The input function is not valid."))
 
@@ -578,13 +590,15 @@ class Result(Generic[T]):
 
         if num_of_function_params == 0:
             if self.success or ignore_previous_error:
-                return try_func(func, num_of_try=num_of_try, try_only_on_exceptions=try_only_on_exceptions)
+                return try_func(func, num_of_try=num_of_try, try_only_on_exceptions=try_only_on_exceptions,
+                                none_means_success=none_means_success)
             return Result.fail(ValidationError(
                 message="The previous function failed. "
                         "The new function does not have a parameter to get the previous result. "
                         "Either define a function that accepts a parameter or set skip_previous_error to True."))
         if num_of_function_params == 1:
-            return try_func(lambda: func(self), num_of_try=num_of_try, try_only_on_exceptions=try_only_on_exceptions)
+            return try_func(lambda: func(self), num_of_try=num_of_try,
+                            try_only_on_exceptions=try_only_on_exceptions, none_means_success=none_means_success)
         return Result.fail(ValidationError(
             message=f"{func.__name__}() takes {num_of_function_params} arguments. It cannot be executed."))
 
@@ -698,7 +712,8 @@ class Result(Generic[T]):
     # endregion
 
 
-def try_func(func: Callable, num_of_try: int = 1, try_only_on_exceptions: bool = True) -> Result:
+def try_func(func: Callable, num_of_try: int = 1, try_only_on_exceptions: bool = True,
+             none_means_success: bool = True) -> Result:
     """
     The function `try_func` attempts to execute a given function with a specified number of tries and handles errors.
 
@@ -712,8 +727,15 @@ def try_func(func: Callable, num_of_try: int = 1, try_only_on_exceptions: bool =
     exception is raised. If set to True, the function will only be retried if an exception is raised. If set to False, the
     function will be retried regardless of whether an exception is raised or Result is not success, defaults to True
     :type try_only_on_exceptions: bool (optional)
+
+    :param none_means_success: A boolean parameter that determines whether a `None` output should be considered a
+        success or a failure. If `none_means_success` is `True`, then a `None` output will be considered a success and the
+        function will return a `Result.ok()` instance. If `none_means_success` is, defaults to True
+    :type none_means_success: bool (optional)
+
     :return: a `Result` object.
     """
+
     if not is_func_valid(func):
         return Result.fail(ValidationError(message="The input function is not valid."))
 
@@ -730,7 +752,7 @@ def try_func(func: Callable, num_of_try: int = 1, try_only_on_exceptions: bool =
     for _ in range(num_of_try):
         try:
             result = await_func(func)
-            result = Result.convert_to_result(result)
+            result = Result.convert_to_result(result, none_means_success=none_means_success)
             if result.success or try_only_on_exceptions:
                 return result
             if result.detail:
@@ -758,8 +780,10 @@ async def try_func_async(func_async: Callable, num_of_try: int = 1, try_only_on_
     exception is raised. If set to True, the function will only be retried if an exception is raised. If set to False, the
     function will be retried regardless of whether an exception is raised or Result is not success, defaults to True
     :type try_only_on_exceptions: bool (optional)
+
     :return: a `Result` object.
     """
+
     if not is_func_valid(func_async):
         return Result.fail(ValidationError(message="The input function is not valid."))
 
