@@ -564,6 +564,7 @@ class TestResult(unittest.TestCase):
                             expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION])
 
     def test_on_success_break_with_condition_true(self):
+        self.assertRaises(BreakRailsException, lambda: Result.ok(1).on_success_break())  # Default is true
         self.assertRaises(BreakRailsException, lambda: Result.ok(1).on_success_break(True))
         self.assertRaises(BreakRailsException, lambda: Result.ok(1).on_success_break(lambda: True))
         self.assertRaises(BreakRailsException, lambda: Result.ok(1).on_success_break(lambda: Result.ok(True)))
@@ -878,6 +879,7 @@ class TestResult(unittest.TestCase):
                             expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION])
 
     def test_on_fail_break_with_condition_true(self):
+        self.assertRaises(BreakRailsException, lambda: Result.fail().on_fail_break())  # Default is true
         self.assertRaises(BreakRailsException, lambda: Result.fail().on_fail_break(True))
         self.assertRaises(BreakRailsException, lambda: Result.fail().on_fail_break(lambda: True))
         self.assertRaises(BreakRailsException, lambda: Result.fail().on_fail_break(lambda: Result.ok(True)))
@@ -1282,7 +1284,7 @@ class TestResult(unittest.TestCase):
 
     # region BreakRails Exception
 
-    def test_break_rails_ok(self):
+    def test_BreakRailsException_ok(self):
         # Success
         result = Result.ok(1, SuccessDetail())
         exception = BreakRailsException(result)
@@ -1297,7 +1299,7 @@ class TestResult(unittest.TestCase):
         assert_exception(self, exception, BreakRailsException)
         self.assertEqual(result, exception.result)
 
-    def test_break_rails_give_none(self):
+    def test_BreakRailsException_give_none(self):
         self.assertRaises(ValueError, lambda: BreakRailsException(None))
         self.assertRaises(ValueError, lambda: BreakRailsException("Not result type"))
 
@@ -1329,6 +1331,7 @@ class TestResult(unittest.TestCase):
                             expected_exception=FAKE_EXCEPTION, expected_more_data=[FAKE_EXCEPTION])
 
     def test_break_rails_with_condition_true(self):
+        self.assertRaises(BreakRailsException, lambda: Result.ok(1).break_rails())  # Default is true
         self.assertRaises(BreakRailsException, lambda: Result.ok(1).break_rails(True))
         self.assertRaises(BreakRailsException, lambda: Result.ok(1).break_rails(lambda: True))
         self.assertRaises(BreakRailsException, lambda: Result.ok(1).break_rails(lambda: Result.ok(True)))
