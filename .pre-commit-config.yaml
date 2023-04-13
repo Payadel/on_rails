@@ -36,12 +36,12 @@ repos:
       - id: pylint
         files: 'on_rails/'
 
-  - repo: local
+  - repo: https://github.com/Payadel/pre-commit-hooks
+    rev: v0.1.2
     hooks:
-      - id: check-tox-before-push
+      - id: run-scripts
         name: check tox before push
-        language: script
-        entry: .hooks/check-tox.sh
-        args: [ "dev" ]
+        args: [ "-f=.hooks/check-tox.sh", "dev" ]
         stages: [ push ]
-        verbose: true
+        pass_filenames: false
+        verbose: false
