@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.1.0](https://github.com/Payadel/on_rails/compare/v4.0.1...v4.1.0) (2023-04-16)
+
+
+### Features
+
+* support python 3.8 ([06b8c2b](https://github.com/Payadel/on_rails/commit/06b8c2b2fc33a4a71ed171f09b5ec873f81bebaf))
+
+
+### Development: CI/CD, Build, etc
+
+* use `Payadel/pre-commit-hooks` in .pre-commit-config.yaml ([4372f18](https://github.com/Payadel/on_rails/commit/4372f18c8e11867844e88a245d756859c10c4d42))
+
 ### [4.0.1](https://github.com/Payadel/on_rails/compare/v4.0.0...v4.0.1) (2023-04-12)
 
 
