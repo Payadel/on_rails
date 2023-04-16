@@ -1,7 +1,7 @@
 # https://python-poetry.org/docs/pyproject/
 [tool.poetry]
 name = "on_rails"
-version = "4.0.1"
+version = "4.1.0"
 description = "Simple and powerful Railway Oriented library for python"
 authors = ["Payadel <payadelteam@gmail.com>"]
 readme = "README.md"
@@ -11,7 +11,7 @@ keywords = ["railway oriented","functional programming", "error handling"]
 packages = [{ include = "on_rails" }]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.8"
 
 
 [tool.poetry.group.dev.dependencies]
