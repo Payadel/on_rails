@@ -19,16 +19,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Print & Validate inputs
-        run: |
-          echo "version: ${{ inputs.version }}"
-          echo "Current Branch: $(git rev-parse --abbrev-ref HEAD)"
+      - name: Inputs
+        uses: Payadel/inputs@v0.2.3
+        id: inputs
+        with:
+          inputs: |
+            - name: version
+              default: ''
+            - name: current-branch-name
+              default: '$(git rev-parse --abbrev-ref HEAD)'
 
       - name: Run Changelog
         uses: payadel/changelog-sv-action@v0.0.1
         id: changelog
         with:
-          version: ${{ inputs.version }}
+          version: ${{ steps.inputs.outputs.version }}
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v4

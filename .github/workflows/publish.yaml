@@ -15,9 +15,15 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
 
-      - name: Print Inputs
-        run: |
-          echo "poetry version ${{ inputs.version }}"
+      - name: Inputs
+        uses: Payadel/inputs@v0.2.3
+        id: inputs
+        with:
+          inputs: |
+            - name: version
+              default: ''
+            - name: current-branch-name
+              default: '$(git rev-parse --abbrev-ref HEAD)'
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -31,8 +37,8 @@ jobs:
 
       - name: Update poetry version
         run: |
-          poetry version ${{ inputs.version }}
-        if: ${{ inputs.version != '' }}
+          poetry version ${{ steps.inputs.outputs.version }}
+        if: ${{ steps.inputs.outputs.version != '' }}
 
       - name: Configure poetry
         env:
