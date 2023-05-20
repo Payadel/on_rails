@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.2.0](https://github.com/Payadel/on_rails/compare/v4.1.0...v4.2.0) (2023-05-20)
+
+
+### Features
+
+* add WarningDetail.py ([3b13361](https://github.com/Payadel/on_rails/commit/3b13361b4cd452ce8f45c56f229425f6b5a51ef4))
+
+
+### Development: CI/CD, Build, etc
+
+* update release action ([12d8f58](https://github.com/Payadel/on_rails/commit/12d8f587005cb12d1a94083853364bd6c428622f))
+* use `Payadel/inputs` in actions ([ef7b159](https://github.com/Payadel/on_rails/commit/ef7b159d7fc44c13cfaff19febb349483da1564b))
+
+
+### Tests
+
+* add test for WarningDetail ([eef028d](https://github.com/Payadel/on_rails/commit/eef028d9b896454796b61bc945843a3ef6ef73f1))
+
 ## [4.1.0](https://github.com/Payadel/on_rails/compare/v4.0.1...v4.1.0) (2023-04-16)
 
 
