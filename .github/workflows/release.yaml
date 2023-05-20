@@ -3,35 +3,27 @@ name: Release
 on:
   workflow_dispatch:
     inputs:
-      skip_release_file:
-        type: boolean
-        required: false
-        default: false
-        description: Skip create release file
-      release_file_name:
-        required: true
-        default: 'release'
-      release_directory:
-        required: true
-        default: 'on_rails'
       version:
         required: false
         default: ''
-      skip_changelog:
-        type: boolean
-        default: true
-        description: Skip generate changelog
-      create_pr_for_branch:
+      create-pr-for-branch:
         required: false
         default: 'main'
         description: Target branch? empty for skip.
+      generate-changelog:
+        type: choice
+        default: auto
+        options:
+          - never
+          - always
+          - auto
 
 permissions:
   contents: write
   pull-requests: write
 
 jobs:
-  Release:
+  default:
     runs-on: ubuntu-latest
 
     # Limit branch:
@@ -44,28 +36,36 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Print inputs
-        run: |
-          echo "skip_release_file: ${{ inputs.skip_release_file }}"
-          echo "release_file_name: ${{ inputs.release_file_name }}"
-          echo "release_directory: ${{ inputs.release_directory }}"
-          echo "skip_changelog: ${{ inputs.skip_changelog }}"
-          echo "version: ${{ inputs.version }}"
-          echo "create_pr_for_branch: ${{ inputs.create_pr_for_branch }}"
-          echo "Current Branch: $(git rev-parse --abbrev-ref HEAD)"
+      - name: Inputs
+        uses: Payadel/inputs@v0.2.3
+        id: inputs
+        with:
+          inputs: |
+            - name: version
+              default: ''
+            - name: create-pr-for-branch
+              default: 'main'
+            - name: generate-changelog
+              default: 'auto'
+            - name: current-branch-name
+              default: '$(git rev-parse --abbrev-ref HEAD)'
 
       - name: Release
-        uses: Payadel/release-sv-action@v0.2.1
+        uses: Payadel/release-sv-action@v0.3.1
         id: release
         with:
-          version: ${{ inputs.version }}
-          skip-changelog: ${{ inputs.skip_changelog }}
-          skip-release-file: ${{ inputs.skip_release_file }}
-          release-directory: ${{ inputs.release_directory }}
-          release-file-name: ${{ inputs.release_file_name }}
-          create-pr-for-branch: ${{ inputs.create_pr_for_branch }}
+          version: ${{ steps.inputs.outputs.version }}
+          create-pr-for-branch: ${{ steps.inputs.outputs.create-pr-for-branch }}
+          generate-changelog: ${{ steps.inputs.outputs.generate-changelog }}
+          skip-release-file: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Print outputs
+        run: |
+          echo "version: ${{ steps.release.outputs.version }}"
+          echo "pull-request-url: ${{ steps.release.outputs.pull-request-url }}"
+          echo "release-filename: ${{ steps.release.outputs.release-filename }}"
 
       - name: Update poetry version
         run: |
@@ -78,7 +78,7 @@ jobs:
       - name: GitHub Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: '${{ steps.release.outputs.releaseFileName }}'
+          artifacts: '${{ steps.release.outputs.release-filename }}'
           allowUpdates: true
-          bodyFile: "CHANGELOG.md"
+          body: ${{ steps.release.outputs.changelog }}
           tag: 'v${{ steps.release.outputs.version }}'

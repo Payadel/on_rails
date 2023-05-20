@@ -7,3 +7,4 @@ disable=
     R0913, # Too many arguments (too-many-arguments)
     W0703, # Catching too general exception Exception (broad-except)
     R0904, # Too many public methods (too-many-public-methods)
+    W0719, # Raising too general exception (broad-exception-raised)
